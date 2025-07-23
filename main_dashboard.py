@@ -26,18 +26,19 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(90deg, #1f77b4, #2e86ab);
+        background: #ffffff;
         padding: 2rem;
         border-radius: 15px;
         text-align: center;
         margin-bottom: 2rem;
-        color: white;
+        color: #0066CC;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     .main-title {
         font-size: 2.5rem;
         font-weight: bold;
+        color: #0066CC;
         margin-bottom: 0.5rem;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
@@ -45,6 +46,7 @@ st.markdown("""
     .main-subtitle {
         font-size: 1.2rem;
         opacity: 0.9;
+        color: #0066CC;
         margin: 0;
     }
     
@@ -55,6 +57,87 @@ st.markdown("""
         background: #f8f9fa;
         border-radius: 15px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* BUTTON TO HƠN - MÀU Y TẾ */
+    .stButton > button {
+        height: 80px !important;
+        font-size: 1.2rem !important;
+        font-weight: bold !important;
+        border-radius: 15px !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+    }
+    
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #5dade2 0%, #3498db 100%) !important;
+        color: white !important;
+    }
+    
+    /* BUTTON ĐĂNG XUẤT ĐỎ NHỎ */
+    button[data-testid*="logout_btn"] {
+        height: 40px !important;
+        font-size: 0.9rem !important;
+        font-weight: normal !important;
+        border-radius: 8px !important;
+        margin: 5px 0 !important;
+        padding: 8px 16px !important;
+        background: #e74c3c !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3) !important;
+    }
+    
+    .stButton > button:not([kind="primary"]) {
+        height: 40px !important;
+        font-size: 0.9rem !important;
+        font-weight: normal !important;
+        border-radius: 8px !important;
+        margin: 5px 0 !important;
+        padding: 8px 16px !important;
+        background: #e74c3c !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3) !important;
+    }
+    
+    /* BUTTON DASHBOARD CHÍNH TO TO */
+    button[data-testid*="dashboard_admin_main"],
+    button[data-testid*="dashboard_fleet_main"], 
+    button[data-testid*="dashboard_umc_main"] {
+        height: 120px !important;
+        font-size: 1.8rem !important;
+        font-weight: bold !important;
+        border-radius: 20px !important;
+        margin: 15px 0 !important;
+        padding: 20px !important;
+    }
+    
+    /* DỰ PHÒNG - TARGET TẤT CẢ BUTTON TRONG COLUMNS */
+    .main .block-container .stColumn .stButton > button[kind="primary"] {
+        height: 120px !important;
+        font-size: 1.8rem !important;
+        font-weight: bold !important;
+        border-radius: 20px !important;
+        margin: 15px 0 !important;
+        padding: 20px !important;
+    }
+    
+    /* MÀU RIÊNG CHO TỪNG DASHBOARD */
+    button[data-testid*="dashboard_admin_main"] {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%) !important;
+    }
+    
+    button[data-testid*="dashboard_fleet_main"] {
+        background: linear-gradient(135deg, #1cc88a 0%, #17a2b8 100%) !important;
+    }
+    
+    button[data-testid*="dashboard_umc_main"] {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
     }
     
     .dashboard-card {
@@ -75,11 +158,15 @@ st.markdown("""
     }
     
     .dashboard-card.fleet {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background: linear-gradient(135deg, #1cc88a 0%, #17a2b8 100%);
     }
     
     .dashboard-card.admin {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    }
+    
+    .dashboard-card.umc {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     }
     
     .card-icon {
@@ -148,6 +235,13 @@ st.markdown("""
     .feature-icon {
         margin-right: 12px;
         font-size: 1.2rem;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -220,6 +314,7 @@ def login_page():
         **🎯 Chức năng:**
         - 📊 Dashboard số liệu hành chính
         - 🚗 Dashboard quản lý tổ xe
+        - 🏥 Dashboard UMC Multi-Department
         - 📈 Báo cáo và phân tích dữ liệu
         - 💾 Xuất báo cáo Excel/CSV
         
@@ -284,54 +379,94 @@ def dashboard_selection_page():
         """, unsafe_allow_html=True)
     
     with col2:
-        if st.button("🚪 Đăng xuất", use_container_width=True):
+        if st.button("🚪 Đăng xuất", use_container_width=True, key="logout_btn"):
             for key in ['authenticated', 'username', 'login_time', 'selected_dashboard']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
     
-    # Menu chọn dashboard
+    # Menu chọn dashboard - BUTTON ĐƠN GIẢN
     st.markdown("## 📊 Chọn Dashboard")
     st.markdown("*Chọn dashboard bạn muốn sử dụng:*")
     
-    col1, col2 = st.columns(2)
+    # CSS ĐẶC BIỆT CHỈ CHỞ BUTTON NÀY
+    st.markdown("""
+    <style>
+    /* ÉP BUTTON DASHBOARD TO TO */
+    div[data-testid="column"] button[kind="primary"] {
+        height: 150px !important;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        border-radius: 25px !important;
+        margin: 20px 0 !important;
+        padding: 25px !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* MÀU Y TẾ CHO DASHBOARD */
+    div[data-testid="column"]:nth-child(1) button[kind="primary"] {
+        background: linear-gradient(135deg, #5dade2 0%, #3498db 100%) !important;
+        color: white !important;
+    }
+    
+    div[data-testid="column"]:nth-child(2) button[kind="primary"] {
+        background: linear-gradient(135deg, #58d68d 0%, #27ae60 100%) !important;
+        color: white !important;
+    }
+    
+    div[data-testid="column"]:nth-child(3) button[kind="primary"] {
+        background: linear-gradient(135deg, #bb8fce 0%, #8e44ad 100%) !important;
+        color: white !important;
+    }
+    
+    /* BUTTON ĐĂNG XUẤT NHỎ LẠI */
+    .stButton button:not([kind="primary"]) {
+        height: 40px !important;
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+        margin: 5px 0 !important;
+        padding: 8px 16px !important;
+        background: #e74c3c !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3) !important;
+    }
+    
+    /* ĐẢM BẢO BUTTON ĐĂNG XUẤT KHÔNG BỊ ẢNH HƯỞNG */
+    .stButton button[data-testid*="logout"] {
+        height: 40px !important;
+        font-size: 0.9rem !important;
+        font-weight: normal !important;
+        border-radius: 8px !important;
+        margin: 5px 0 !important;
+        padding: 8px 16px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
-        <div class='dashboard-card admin'>
-            <div class='card-icon'>📋</div>
-            <div class='card-title'>Dashboard Số liệu Hành Chính</div>
-            <div class='card-description'>
-                Quản lý và báo cáo số liệu hoạt động:<br>
-                • Văn bản đến/đi<br>
-                • Sự kiện và lễ tân<br>
-                • Tổng đài và khách VIP<br>
-                • Pivot table với biến động
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🚀 Mở Dashboard Hành Chính", key="open_admin", use_container_width=True):
+        if st.button("📋 Dashboard Hành Chính", 
+                    use_container_width=True, 
+                    type="primary",
+                    key="dashboard_admin_main"):
             st.session_state.selected_dashboard = "admin"
             st.rerun()
     
     with col2:
-        st.markdown("""
-        <div class='dashboard-card fleet'>
-            <div class='card-icon'>🚗</div>
-            <div class='card-title'>Dashboard Quản lý Tổ Xe</div>
-            <div class='card-description'>
-                Quản lý hoạt động vận chuyển:<br>
-                • Theo dõi chuyến xe<br>
-                • Phân tích nhiên liệu<br>
-                • Hiệu suất tài xế<br>
-                • Báo cáo doanh thu
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🚀 Mở Dashboard Tổ Xe", key="open_fleet", use_container_width=True):
+        if st.button("🚗 Dashboard Tổ Xe", 
+                    use_container_width=True, 
+                    type="primary",
+                    key="dashboard_fleet_main"):
             st.session_state.selected_dashboard = "fleet"
+            st.rerun()
+    
+    with col3:
+        if st.button("🏥 Dashboard UMC Multi", 
+                    use_container_width=True, 
+                    type="primary",
+                    key="dashboard_umc_main"):
+            st.session_state.selected_dashboard = "umc"
             st.rerun()
     
     # Thống kê hệ thống
@@ -349,7 +484,7 @@ def dashboard_selection_page():
     with col2:
         st.metric(
             label="📊 Dashboard khả dụng",
-            value="2",
+            value="3",
             help="Số dashboard đang hoạt động"
         )
     
@@ -367,10 +502,10 @@ def dashboard_selection_page():
             help="Lần cập nhật dữ liệu gần nhất"
         )
     
-    # Tính năng nổi bật
-    st.markdown("## ✨ Tính năng nổi bật")
+    # MÔ TẢ CHI TIẾT Ở DƯỚI
+    st.markdown("## 📋 Mô tả chi tiết các Dashboard")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
@@ -395,6 +530,18 @@ def dashboard_selection_page():
             <div class='feature-item'>
                 <span class='feature-icon'>☁️</span>
                 <span>Sync tự động với GitHub</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>📄</span>
+                <span>Quản lý văn bản đến/đi</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>🎉</span>
+                <span>Sự kiện và lễ tân</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>📞</span>
+                <span>Tổng đài và khách VIP</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -423,24 +570,60 @@ def dashboard_selection_page():
                 <span class='feature-icon'>📱</span>
                 <span>Giao diện responsive mobile</span>
             </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>🛣️</span>
+                <span>Quản lý lộ trình và khoảng cách</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>🔧</span>
+                <span>Theo dõi bảo dưỡng định kỳ</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>📊</span>
+                <span>Phân tích chi phí vận hành</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class='feature-list'>
+            <h4>🏥 Dashboard UMC Multi</h4>
+            <div class='feature-item'>
+                <span class='feature-icon'>🔧</span>
+                <span>7 phòng ban tích hợp</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>📊</span>
+                <span>Báo cáo 6 tháng chi tiết</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>📈</span>
+                <span>Biểu đồ đa dạng & tương tác</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>💻</span>
+                <span>Giao diện thân thiện</span>
+            </div>
+            <div class='feature-item'>
+                <span class='feature-icon'>🎯</span>
+                <span>KPI theo dõi hiệu quả</span>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
 def run_admin_dashboard():
     """Chạy dashboard hành chính"""
-    
     try:
-        # Debug info
-        
         # Kiểm tra file tồn tại
         if not os.path.exists("dash_phonghc.py"):
-
+            st.error("❌ Không tìm thấy file dash_phonghc.py")
+            st.info("📁 Files hiện có:")
             for f in os.listdir("."):
                 if f.endswith(".py"):
                     st.write(f"- {f}")
             back_to_menu()
             return
-        
         
         # Import và chạy dashboard hành chính
         import importlib.util
@@ -448,13 +631,11 @@ def run_admin_dashboard():
         # Thử load module dash_phonghc
         spec = importlib.util.spec_from_file_location("dash_phonghc", "dash_phonghc.py")
         if spec and spec.loader:
-            
             dash_phonghc = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(dash_phonghc)
             
             # Kiểm tra function main
             if hasattr(dash_phonghc, 'main'):
-                
                 # Chạy main function
                 dash_phonghc.main()
             else:
@@ -473,9 +654,7 @@ def run_admin_dashboard():
 
 def run_fleet_dashboard():
     """Chạy dashboard tổ xe"""
-    
     try:
-                
         # Kiểm tra file tồn tại
         if not os.path.exists("dashboard-to-xe.py"):
             st.error("❌ Không tìm thấy file dashboard-to-xe.py")
@@ -485,7 +664,6 @@ def run_fleet_dashboard():
                     st.write(f"- {f}")
             back_to_menu()
             return
-        
         
         # Import và chạy dashboard tổ xe
         import importlib.util
@@ -498,7 +676,6 @@ def run_fleet_dashboard():
             
             # Kiểm tra function main
             if hasattr(dashboard_6, 'main'):
-                
                 # Chạy main function
                 dashboard_6.main()
             else:
@@ -514,20 +691,41 @@ def run_fleet_dashboard():
         st.code(str(e))
         st.info("💡 Có thể do thiếu secrets hoặc lỗi import")
         back_to_menu()
-        spec = importlib.util.spec_from_file_location("dashboard-to-xe", "dashboard-to-xe.py")
-        if spec and spec.loader:
-            dashboard_6 = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(dashboard_6)
+
+def run_umc_dashboard():
+    """Chạy dashboard UMC Multi-Department"""
+    try:
+        # Kiểm tra file tồn tại
+        if not os.path.exists("dash-umc.py"):
+            st.error("❌ Không tìm thấy file dash-umc.py")
+            st.info("📁 Files hiện có:")
+            for f in os.listdir("."):
+                if f.endswith(".py"):
+                    st.write(f"- {f}")
+            back_to_menu()
+            return
+        
+        # Import và chạy dashboard UMC
+        import importlib.util
+        
+        # Thử load module dash-umc.py
+        spec = importlib.util.spec_from_file_location("dash-umc", "dash-umc.py")
+        if spec and spec.loader:            
+            dash_umc = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(dash_umc)
             
-            # Chạy main function
-            dashboard_6.main()
+            # Dashboard UMC không cần function main, chỉ cần chạy
+            # Vì nó đã có đầy đủ code Streamlit
+            
         else:
-            st.error("❌ Không tìm thấy file dashboard-to-xe.py")
+            st.error("❌ Không thể tạo spec cho dash-umc.py")
             back_to_menu()
             
     except Exception as e:
-        st.error(f"❌ Lỗi khi tải Dashboard Tổ Xe: {str(e)}")
-        st.error("Vui lòng kiểm tra file dashboard-to-xe.py có tồn tại và hoạt động đúng không.")
+        st.error(f"❌ Lỗi khi tải Dashboard UMC:")
+        st.code(str(e))
+        st.info("💡 Có thể do thiếu thư viện hoặc lỗi import")
+        st.info("💡 Đảm bảo đã cài đặt: plotly, pandas, numpy")
         back_to_menu()
 
 def back_to_menu():
@@ -543,64 +741,83 @@ def back_to_menu():
 
 def main():
     """Hàm main của dashboard tổng hợp"""
-    
+
+    # Điều hướng nhanh nếu người dùng nhấp thẳng vào thẻ dashboard
+    query_params = st.query_params
+    nav_value = query_params.get('nav')
+    if nav_value:
+        nav_target = nav_value[0] if isinstance(nav_value, list) else nav_value
+        if nav_target in ('admin', 'fleet', 'umc'):
+            st.session_state.selected_dashboard = nav_target
+            # Xóa query param để tránh lặp vô hạn
+            st.query_params.clear()
+
     # Kiểm tra xác thực
     if not check_authentication():
         login_page()
         return
-    
+
     # Kiểm tra dashboard được chọn
     if 'selected_dashboard' not in st.session_state:
         dashboard_selection_page()
         return
-    
+
     # Sidebar navigation
     with st.sidebar:
         st.markdown("## 🧭 Điều hướng")
-        
+
         current_dashboard = st.session_state.selected_dashboard
-        
+
         if current_dashboard == "admin":
             st.success("📋 **Dashboard Hành Chính**")
             st.info("Đang xem dashboard số liệu hành chính")
         elif current_dashboard == "fleet":
             st.success("🚗 **Dashboard Tổ Xe**")
             st.info("Đang xem dashboard quản lý tổ xe")
-        
+        elif current_dashboard == "umc":
+            st.success("🏥 **Dashboard UMC Multi**")
+            st.info("Đang xem dashboard multi-department")
+
         st.markdown("---")
-        
+
         # Menu điều hướng
         if st.button("🏠 Menu chính", use_container_width=True):
             if 'selected_dashboard' in st.session_state:
                 del st.session_state['selected_dashboard']
             st.rerun()
-        
+
         if st.button("📋 Dashboard Hành Chính", use_container_width=True):
             st.session_state.selected_dashboard = "admin"
             st.rerun()
-        
+
         if st.button("🚗 Dashboard Tổ Xe", use_container_width=True):
             st.session_state.selected_dashboard = "fleet"
             st.rerun()
-        
+
+        if st.button("🏥 Dashboard UMC Multi", use_container_width=True):
+            st.session_state.selected_dashboard = "umc"
+            st.rerun()
+
         st.markdown("---")
-        
+
         if st.button("🚪 Đăng xuất", use_container_width=True):
             for key in ['authenticated', 'username', 'login_time', 'selected_dashboard']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
-        
+
         # Thông tin người dùng
         st.markdown("### 👤 Thông tin")
         st.success(f"**User:** {st.session_state.username}")
         st.info(f"**Login:** {st.session_state.login_time.strftime('%H:%M:%S')}")
-    
+
     # Chạy dashboard tương ứng
     if st.session_state.selected_dashboard == "admin":
         run_admin_dashboard()
     elif st.session_state.selected_dashboard == "fleet":
         run_fleet_dashboard()
+    elif st.session_state.selected_dashboard == "umc":
+        run_umc_dashboard()
     else:
         st.error("❌ Dashboard không hợp lệ!")
         back_to_menu()
