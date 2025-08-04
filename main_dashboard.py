@@ -307,10 +307,6 @@ def login_page():
         st.markdown("""
         **🏥 Dashboard Phòng Hành Chính UMC**
         
-        **📋 Tài khoản demo:**
-        - Tài khoản: `phonghc.umc`
-        - Mật khẩu: `hanhchinh1`
-        
         **🎯 Chức năng:**
         - 📊 Dashboard số liệu hành chính
         - 🚗 Dashboard quản lý tổ xe
@@ -319,8 +315,19 @@ def login_page():
         - 💾 Xuất báo cáo Excel/CSV
         
         **🔧 Hỗ trợ kỹ thuật:**
-        - Email: admin@umc.edu.vn
-        - Hotline: 028-38.555.678
+        - Email: quang.dh@umc.edu.vn
+        - Email cá nhân: huuquang.data@gmail.com
+        - SĐT cá nhân: 0789 106 201
+        
+                Phát triển bởi Dương Hữu Quang - Chuyên viên Hành chính Tổng hợp, Phòng Hành chính, Bệnh viện Đại học Y Dược TP. Hồ Chí Minh
+                    
+        **📅 Phiên bản:** 1.0.0
+        
+        **📅 Ngày phát hành:** 01/08/2025
+
+        **📁 Tài liệu:** github.com/corner-25
+        
+
         """)
 
 def create_header():
@@ -764,6 +771,29 @@ def main():
 
     # Sidebar navigation
     with st.sidebar:
+        # Sidebar‑specific CSS to isolate its buttons from global styles
+        st.markdown("""
+        <style>
+        /* RESET and customize only sidebar buttons */
+        div[data-testid="stSidebar"] .stButton > button {
+            height: 40px !important;
+            font-size: 0.9rem !important;
+            font-weight: normal !important;
+            border-radius: 8px !important;
+            margin: 6px 0 !important;
+            padding: 6px 14px !important;
+            box-shadow: none !important;
+            background: #f0f2f6 !important;
+            color: #333 !important;
+        }
+
+        /* Primary‑type buttons inside sidebar */
+        div[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+            background: linear-gradient(135deg, #5dade2 0%, #3498db 100%) !important;
+            color: #fff !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         st.markdown("## 🧭 Điều hướng")
 
         current_dashboard = st.session_state.selected_dashboard

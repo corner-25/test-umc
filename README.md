@@ -2,8 +2,6 @@
 
 **Dashboard tích hợp cho Bệnh viện Đại học Y Dược TP. HCM (University Medical Center)**
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-app-url.streamlit.app)
-
 ## 🎯 Tổng quan
 
 Hệ thống dashboard tích hợp gồm:

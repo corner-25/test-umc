@@ -930,43 +930,240 @@ class PivotTableDashboard:
         }
         return defaults.get(report_type, ['Tháng'])
     
+    def create_quick_filters(self):
+        """Tạo bộ lọc nhanh với các button"""
+        st.sidebar.header("🚀 Bộ lọc nhanh")
+        
+        # Lấy thông tin thời gian hiện tại
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+        current_week = datetime.now().isocalendar()[1]  # ISO week number
+        current_quarter = ((current_month - 1) // 3) + 1
+        
+        # Lấy tuần cao nhất trong dữ liệu
+        max_week_in_data = int(self.data['Tuần'].max()) if not self.data.empty else current_week
+        
+        # Tạo 2 cột cho layout đẹp
+        col1, col2 = st.sidebar.columns(2)
+        
+        with col1:
+            # 4 tuần gần nhất
+            if st.button("📅 4 tuần gần nhất", use_container_width=True, key="btn_4_weeks"):
+                start_week = max(1, max_week_in_data - 3)
+                st.session_state.quick_filter = {
+                    'from_year': current_year,
+                    'from_month': 1,
+                    'from_week': start_week,
+                    'to_year': current_year,
+                    'to_month': 12,
+                    'to_week': max_week_in_data,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+            
+            # Tháng này
+            if st.button("📅 Tháng này", use_container_width=True, key="btn_this_month"):
+                st.session_state.quick_filter = {
+                    'from_year': current_year,
+                    'from_month': current_month,
+                    'from_week': 1,
+                    'to_year': current_year,
+                    'to_month': current_month,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+            
+            # Quý này
+            if st.button("📅 Quý này", use_container_width=True, key="btn_this_quarter"):
+                quarter_start_month = (current_quarter - 1) * 3 + 1
+                quarter_end_month = current_quarter * 3
+                st.session_state.quick_filter = {
+                    'from_year': current_year,
+                    'from_month': quarter_start_month,
+                    'from_week': 1,
+                    'to_year': current_year,
+                    'to_month': quarter_end_month,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+            
+            # 6 tháng đầu năm (1-6)
+            if st.button("📅 6 tháng đầu năm", use_container_width=True, key="btn_first_half"):
+                st.session_state.quick_filter = {
+                    'from_year': current_year,
+                    'from_month': 1,
+                    'from_week': 1,
+                    'to_year': current_year,
+                    'to_month': 6,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+        
+        with col2:
+            # Tất cả
+            if st.button("📅 Tất cả", use_container_width=True, key="btn_all"):
+                years = sorted(self.data['Năm'].unique())
+                st.session_state.quick_filter = {
+                    'from_year': years[0] if years else current_year,
+                    'from_month': 1,
+                    'from_week': 1,
+                    'to_year': years[-1] if years else current_year,
+                    'to_month': 12,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+            
+            # Tháng trước
+            if st.button("📅 Tháng trước", use_container_width=True, key="btn_last_month"):
+                last_month = current_month - 1 if current_month > 1 else 12
+                last_month_year = current_year if current_month > 1 else current_year - 1
+                st.session_state.quick_filter = {
+                    'from_year': last_month_year,
+                    'from_month': last_month,
+                    'from_week': 1,
+                    'to_year': last_month_year,
+                    'to_month': last_month,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+            
+            # Quý trước
+            if st.button("📅 Quý trước", use_container_width=True, key="btn_last_quarter"):
+                last_quarter = current_quarter - 1 if current_quarter > 1 else 4
+                last_quarter_year = current_year if current_quarter > 1 else current_year - 1
+                quarter_start_month = (last_quarter - 1) * 3 + 1
+                quarter_end_month = last_quarter * 3
+                st.session_state.quick_filter = {
+                    'from_year': last_quarter_year,
+                    'from_month': quarter_start_month,
+                    'from_week': 1,
+                    'to_year': last_quarter_year,
+                    'to_month': quarter_end_month,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+            
+            # 6 tháng cuối năm (7-12)
+            if st.button("📅 6 tháng cuối năm", use_container_width=True, key="btn_second_half"):
+                st.session_state.quick_filter = {
+                    'from_year': current_year,
+                    'from_month': 7,
+                    'from_week': 1,
+                    'to_year': current_year,
+                    'to_month': 12,
+                    'to_week': 53,
+                    'categories': list(self.data['Danh mục'].unique())
+                }
+                st.rerun()
+        
+        # Hiển thị bộ lọc hiện tại
+        if 'quick_filter' in st.session_state:
+            filter_info = st.session_state.quick_filter
+            st.sidebar.success(f"✅ Đã áp dụng bộ lọc nhanh")
+            st.sidebar.info(f"📅 Từ: {filter_info['from_month']}/{filter_info['from_year']} (tuần {filter_info['from_week']})\n"
+                        f"📅 Đến: {filter_info['to_month']}/{filter_info['to_year']} (tuần {filter_info['to_week']})")
+        
+        st.sidebar.markdown("---")
+
     def create_filters(self):
-        """Tạo bộ lọc dữ liệu"""
-        st.sidebar.header("🔍 Lọc dữ liệu")
+        """Tạo bộ lọc dữ liệu - CẬP NHẬT để tích hợp với quick filter"""
+        
+        # THÊM BỘ LỌC NHANH TRƯỚC
+        self.create_quick_filters()
+        
+        st.sidebar.header("🔍 Lọc dữ liệu chi tiết")
 
         # ----- KHUNG THỜI GIAN: TỪ ... ĐẾN ... -----
         years = sorted(self.data['Năm'].unique())
         months_list = list(range(1, 13))
         weeks_list = list(range(1, 53))
 
+        # Sử dụng giá trị từ quick filter nếu có, nếu không dùng mặc định
+        if 'quick_filter' in st.session_state:
+            default_from_year = st.session_state.quick_filter['from_year']
+            default_from_month = st.session_state.quick_filter['from_month']
+            default_from_week = st.session_state.quick_filter['from_week']
+            default_to_year = st.session_state.quick_filter['to_year']
+            default_to_month = st.session_state.quick_filter['to_month']
+            default_to_week = st.session_state.quick_filter['to_week']
+            default_categories = st.session_state.quick_filter['categories']
+        else:
+            default_from_year = years[0] if years else datetime.now().year
+            default_from_month = 1
+            default_from_week = 1
+            default_to_year = years[-1] if years else datetime.now().year
+            default_to_month = 12
+            default_to_week = 52
+            default_categories = list(self.data['Danh mục'].unique())
+
+        # Tính toán index an toàn cho selectbox
+        def safe_get_index(value, options_list):
+            """Lấy index an toàn, tránh lỗi nếu value không có trong list"""
+            try:
+                return options_list.index(value)
+            except (ValueError, IndexError):
+                return 0
+
         st.sidebar.subheader("⏱️ Từ (From)")
-        from_year = st.sidebar.selectbox("Năm bắt đầu", years, index=0, key="from_year")
-        from_month = st.sidebar.selectbox("Tháng bắt đầu", months_list, index=0, key="from_month")
-        from_week = st.sidebar.selectbox("Tuần bắt đầu", weeks_list, index=0, key="from_week")
+        from_year = st.sidebar.selectbox("Năm bắt đầu", years, 
+                                    index=safe_get_index(default_from_year, years), 
+                                    key="from_year")
+        from_month = st.sidebar.selectbox("Tháng bắt đầu", months_list, 
+                                        index=max(0, min(default_from_month - 1, len(months_list) - 1)), 
+                                        key="from_month")
+        from_week = st.sidebar.selectbox("Tuần bắt đầu", weeks_list, 
+                                    index=max(0, min(default_from_week - 1, len(weeks_list) - 1)), 
+                                    key="from_week")
 
         st.sidebar.subheader("⏱️ Đến (To)")
-        to_year = st.sidebar.selectbox("Năm kết thúc", years, index=len(years) - 1, key="to_year")
-        to_month = st.sidebar.selectbox("Tháng kết thúc", months_list, index=11, key="to_month")
-        to_week = st.sidebar.selectbox("Tuần kết thúc", weeks_list, index=51, key="to_week")
+        to_year = st.sidebar.selectbox("Năm kết thúc", years, 
+                                    index=safe_get_index(default_to_year, years) if years else 0, 
+                                    key="to_year")
+        to_month = st.sidebar.selectbox("Tháng kết thúc", months_list, 
+                                    index=max(0, min(default_to_month - 1, len(months_list) - 1)), 
+                                    key="to_month")
+        to_week = st.sidebar.selectbox("Tuần kết thúc", weeks_list, 
+                                    index=max(0, min(default_to_week - 1, len(weeks_list) - 1)), 
+                                    key="to_week")
 
         # -------- CHỌN DANH MỤC --------
         unique_categories = self.data['Danh mục'].unique()
         sorted_categories = sorted(unique_categories,
-                                   key=lambda x: self.category_priority.get(x, 999))
+                                key=lambda x: self.category_priority.get(x, 999))
 
         selected_categories = []
         with st.sidebar.expander("📂 Chọn danh mục", expanded=True):
-            select_all = st.checkbox("Chọn tất cả danh mục", value=True, key="select_all_cat")
+            # Kiểm tra xem có bộ lọc nhanh không để quyết định select_all
+            if 'quick_filter' in st.session_state:
+                select_all = st.checkbox("Chọn tất cả danh mục", value=True, key="select_all_cat")
+            else:
+                select_all = st.checkbox("Chọn tất cả danh mục", value=True, key="select_all_cat")
+                
             if select_all:
                 selected_categories = list(sorted_categories)
             else:
                 for category in sorted_categories:
-                    category_selected = st.checkbox(f"📁 {category}", value=False, key=f"cat_{category}")
+                    category_selected = st.checkbox(f"📁 {category}", 
+                                                value=category in default_categories, 
+                                                key=f"cat_{category}")
                     if category_selected:
                         selected_categories.append(category)
 
+        # Reset quick filter button
+        if st.sidebar.button("🔄 Reset bộ lọc nhanh", help="Xóa bộ lọc nhanh đã chọn"):
+            if 'quick_filter' in st.session_state:
+                del st.session_state.quick_filter
+            st.sidebar.success("✅ Đã reset bộ lọc nhanh!")
+            st.rerun()
+
         return from_year, from_month, from_week, to_year, to_month, to_week, selected_categories
-    
+        
     def filter_data(self, from_year, from_month, from_week, to_year, to_month, to_week, categories):
         """Lọc dữ liệu theo khoảng tuần–tháng–năm"""
         filtered = self.data.copy()
@@ -988,7 +1185,7 @@ class PivotTableDashboard:
         filtered = filtered[cond_start & cond_end & (filtered['Danh mục'].isin(categories))]
 
         return filtered
-    
+
     def aggregate_data_by_report_type(self, data, report_type):
         """Tự động aggregate dữ liệu theo loại báo cáo"""
         if report_type == "Theo Tuần":
@@ -1084,31 +1281,57 @@ class PivotTableDashboard:
             
             # ========== SỬ DỤNG SMART AGGREGATION ==========
             # Tạo pivot table cho giá trị chính
+            # Tạo pivot table cho giá trị chính
             if cols:
                 pivot = self.apply_smart_aggregation(data, rows, cols, values)
-                
-                # ============= SẮP XẾP CỘT TUẦN GIẢM DẦN =============
-                if 'Tuần' in cols and hasattr(pivot, 'columns'):
-                    # Lấy danh sách cột hiện tại
-                    current_columns = list(pivot.columns)
-                    
-                    # Tách cột tuần và cột khác
-                    week_columns = []
-                    other_columns = []
-                    
-                    for col in current_columns:
-                        try:
-                            # Kiểm tra xem có phải là số tuần không
+    
+            # ============= SẮP XẾP CỘT TUẦN GIẢM DẦN =============
+            if 'Tuần' in cols and hasattr(pivot, 'columns'):
+                # Lấy danh sách cột hiện tại
+                current_columns = list(pivot.columns)
+        
+                # Tách cột tuần và cột khác
+                week_columns = []
+                other_columns = []
+        
+                for col in current_columns:
+                    try:
+                        # XỬ LÝ MULTIINDEX - Kiểm tra xem có phải là tuple không
+                        if isinstance(col, tuple):
+                            # Nếu là MultiIndex, tìm phần tử là số tuần
+                            week_found = False
+                            for element in col:
+                                try:
+                                    week_num = int(str(element).strip())
+                                    if 1 <= week_num <= 53:  # Tuần hợp lệ
+                                        week_columns.append(col)
+                                        week_found = True
+                                        break
+                                except (ValueError, TypeError):
+                                    continue
+                            if not week_found:
+                                other_columns.append(col)
+                        else:
+                            # Xử lý cột đơn lẻ như cũ
                             week_num = int(str(col).strip())
                             if 1 <= week_num <= 53:  # Tuần hợp lệ
                                 week_columns.append(col)
                             else:
                                 other_columns.append(col)
-                        except (ValueError, TypeError):
-                            other_columns.append(col)
-                    
+                    except (ValueError, TypeError):
+                        other_columns.append(col)
+                
+                # Chỉ thực hiện sắp xếp và thông báo nếu có cột tuần
+                if week_columns:
                     # Sắp xếp tuần theo thứ tự GIẢM DẦN (tuần cao nhất trước)
-                    week_columns_sorted = sorted(week_columns, key=lambda x: int(str(x)), reverse=True)
+                    if isinstance(current_columns[0], tuple):
+                        # Với MultiIndex, sắp xếp theo phần tử tuần
+                        week_columns_sorted = sorted(week_columns, 
+                            key=lambda x: max([int(str(e)) for e in x if str(e).isdigit() and 1 <= int(str(e)) <= 53]), 
+                            reverse=True)
+                    else:
+                        # Với single index
+                        week_columns_sorted = sorted(week_columns, key=lambda x: int(str(x)), reverse=True)
                     
                     # Tái tạo thứ tự cột: tuần (giảm dần) + cột khác
                     new_column_order = week_columns_sorted + other_columns
@@ -1116,17 +1339,28 @@ class PivotTableDashboard:
                     # Reindex pivot table với thứ tự mới
                     pivot = pivot.reindex(columns=new_column_order)
                     
-                    st.sidebar.info(f"📅 Hiển thị từ tuần {max(week_columns)} → tuần {min(week_columns)}")
-                # ====================================================
-                
-                # Sửa lỗi mixed column types
-                if isinstance(pivot.columns, pd.MultiIndex):
-                    pivot.columns = pivot.columns.map(str)
-                else:
-                    pivot.columns = [str(col) for col in pivot.columns]
-                        
-            else:
-                pivot = self.apply_smart_aggregation(data, rows, None, values)
+                    # Lấy min/max tuần để hiển thị thông báo
+                    week_numbers = []
+                    for col in week_columns:
+                        if isinstance(col, tuple):
+                            for element in col:
+                                try:
+                                    week_num = int(str(element).strip())
+                                    if 1 <= week_num <= 53:
+                                        week_numbers.append(week_num)
+                                        break
+                                except (ValueError, TypeError):
+                                    continue
+                        else:
+                            try:
+                                week_num = int(str(col).strip())
+                                if 1 <= week_num <= 53:
+                                    week_numbers.append(week_num)
+                            except (ValueError, TypeError):
+                                continue
+                    
+                    if week_numbers:
+                        st.sidebar.info(f"📅 Hiển thị từ tuần {max(week_numbers)} → tuần {min(week_numbers)}")
             # ===============================================
             
             # Nếu cần hiển thị biến động inline (CHỈ CHO BÁO CÁO THEO TUẦN)
@@ -1308,6 +1542,7 @@ class PivotTableDashboard:
             st.error(f"Lỗi tạo pivot table: {str(e)}")
             return None
 
+ 
     def display_category_sparklines(self, category_data, category_name, report_type):
         """Hiển thị sparklines cho từng nội dung trong danh mục"""
         try:
@@ -1928,19 +2163,6 @@ class PivotTableDashboard:
             return None
 
 def main():
-    if 'authenticated' in st.session_state and st.session_state.authenticated:
-        # Đã đăng nhập ở main dashboard - bypass login hoàn toàn
-        pass
-    else:
-        # Chưa đăng nhập - redirect về main dashboard
-        st.error("🔒 Bạn cần đăng nhập để truy cập dashboard này!")
-        st.info("👆 Vui lòng quay lại trang chính để đăng nhập.")
-        
-        if st.button("🏠 Quay lại trang chính", use_container_width=True):
-            st.query_params.clear()
-            st.switch_page("main_dashboard.py")  # Hoặc redirect về main
-        return
-        
     # HEADER: logo + title on one line (flexbox)
     try:
         # Encode logo to base64 for inline <img>
