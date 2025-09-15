@@ -3145,18 +3145,14 @@ with tab5:
                 if 'meeting_schedules' not in df.columns:
                     df['meeting_schedules'] = 0
 
-                # Thêm cột meeting_level dựa trên số lượng meeting_schedules
-                def categorize_meeting_level(count):
-                    if count == 0:
-                        return 'Không có họp'
-                    elif count <= 2:
-                        return 'Ít họp'
-                    elif count <= 5:
-                        return 'Trung bình'
-                    else:
-                        return 'Nhiều họp'
-
-                df['meeting_level'] = df['meeting_schedules'].apply(categorize_meeting_level)
+                # Thêm cột meeting_level dựa trên số lượng meeting_schedules (thống nhất với logic chart)
+                df['meeting_level'] = df['meeting_schedules'].apply(lambda x:
+                    'Rất ít' if x <= 2 else
+                    'Ít' if x <= 5 else
+                    'Trung bình' if x <= 10 else
+                    'Nhiều' if x <= 20 else
+                    'Rất nhiều'
+                )
 
                 return df
         except Exception as e:
@@ -3231,9 +3227,9 @@ with tab5:
                 |--------|------------------|-------|
                 | 🟢 **Rất ít** | 0-2 cuộc | Ngày làm việc bình thường, ít hoạt động họp |
                 | 🔵 **Ít** | 3-5 cuộc | Ngày có một số cuộc họp, mức độ vừa phải |
-                | 🟡 **Trung bình** | 6-8 cuộc | Ngày khá bận rộn với nhiều cuộc họp |
-                | 🟠 **Nhiều** | 9-12 cuộc | Ngày rất bận với mật độ họp cao |
-                | 🔴 **Rất nhiều** | >12 cuộc | Ngày cực kỳ bận rộn, liên tục các cuộc họp |
+                | 🟡 **Trung bình** | 6-10 cuộc | Ngày khá bận rộn với nhiều cuộc họp |
+                | 🟠 **Nhiều** | 11-20 cuộc | Ngày rất bận với mật độ họp cao |
+                | 🔴 **Rất nhiều** | >20 cuộc | Ngày cực kỳ bận rộn, liên tục các cuộc họp |
 
                 ---
                 #### 📈 Các chỉ số quan trọng:
