@@ -1,0 +1,2688 @@
+{
+    "status": "success",
+    "message": "Data retrieved successfully",
+    "data": [
+        {
+            "Date": 1,
+            "Month": 1,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 2,
+                "tasks_completed_on_time": 1,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 1,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 1,
+            "Month": 7,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 16,
+                "tasks_completed_on_time": 11,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 5,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 6,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 3,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 1,
+            "Month": 8,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 9,
+                "tasks_completed_on_time": 4,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản lý chất lượng bệnh viện",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 2,
+            "Month": 6,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 25,
+                "tasks_completed_on_time": 12,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 2,
+                "tasks_new_rate": 0,
+                "tasks_processing": 11,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 6,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 4,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 1
+                }
+            ]
+        },
+        {
+            "Date": 3,
+            "Month": 2,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 23,
+                "tasks_completed_on_time": 13,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 2,
+                "tasks_new_rate": 0,
+                "tasks_processing": 8,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Đơn vị Pháp chế và Kiểm toán nội bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công tác xã hội",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 3,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 2,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 3,
+            "Month": 4,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 3,
+                "tasks_completed_on_time": 3,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 3,
+            "Month": 6,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 47,
+                "tasks_completed_on_time": 37,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 10,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 11,
+                    "tasks_completed_on_time": 10,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Đơn vị Pháp chế và Kiểm toán nội bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công tác xã hội",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Điều dưỡng",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 6,
+                    "tasks_completed_on_time": 6,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 11,
+                    "tasks_completed_on_time": 4,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 7,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 4,
+            "Month": 3,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 2,
+                "tasks_completed_on_time": 2,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 6,
+            "Month": 3,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 3,
+                "tasks_completed_on_time": 3,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 7,
+            "Month": 10,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 26,
+                "tasks_completed_on_time": 20,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 5,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công tác xã hội",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Điều dưỡng",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản lý chất lượng bệnh viện",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 5,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 8,
+            "Month": 1,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 2,
+                "tasks_completed_on_time": 2,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 8,
+            "Month": 7,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 5,
+                "tasks_completed_on_time": 4,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 1,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Điều dưỡng",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 9,
+            "Month": 9,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 17,
+                "tasks_completed_on_time": 14,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 3,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 5,
+                    "tasks_completed_on_time": 4,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 11,
+            "Month": 3,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 6,
+                "tasks_completed_on_time": 6,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 13,
+            "Month": 1,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 15,
+                "tasks_completed_on_time": 8,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 5,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 14,
+            "Month": 10,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 1,
+                "tasks_completed_on_time": 1,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 15,
+            "Month": 7,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 8,
+                "tasks_completed_on_time": 8,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 16,
+            "Month": 6,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 8,
+                "tasks_completed_on_time": 3,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 5,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 4,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 17,
+            "Month": 6,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 13,
+                "tasks_completed_on_time": 10,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 3,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 4,
+                    "tasks_completed_on_time": 4,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 4,
+                    "tasks_completed_on_time": 4,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                }
+            ]
+        },
+        {
+            "Date": 19,
+            "Month": 2,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 12,
+                "tasks_completed_on_time": 9,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 2,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Đơn vị Pháp chế và Kiểm toán nội bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 5,
+                    "tasks_completed_on_time": 5,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 21,
+            "Month": 7,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 42,
+                "tasks_completed_on_time": 6,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 23,
+                "tasks_new_rate": 0,
+                "tasks_processing": 13,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 3,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công tác xã hội",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Điều dưỡng",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 2,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 2,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 3,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 8,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 8,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 9,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 2,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 6,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 22,
+            "Month": 1,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 6,
+                "tasks_completed_on_time": 6,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Khoa Kiểm soát nhiễm khuẩn",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Phục hồi chức năng",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trạm Y tế cơ quan",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 23,
+            "Month": 5,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 1,
+                "tasks_completed_on_time": 0,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 1,
+                "tasks_processing_rate": 1
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                }
+            ]
+        },
+        {
+            "Date": 23,
+            "Month": 6,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 9,
+                "tasks_completed_on_time": 1,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 2,
+                "tasks_new_rate": 0,
+                "tasks_processing": 6,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 2,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 5,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 5,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 24,
+            "Month": 3,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 33,
+                "tasks_completed_on_time": 15,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 18,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Điều dưỡng",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 4,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 3,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản lý chất lượng bệnh viện",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 3,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 9,
+                    "tasks_completed_on_time": 8,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 6,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 5,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                }
+            ]
+        },
+        {
+            "Date": 25,
+            "Month": 3,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 2,
+                "tasks_completed_on_time": 2,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 26,
+            "Month": 3,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 8,
+                "tasks_completed_on_time": 7,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 1,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Đơn vị can thiệp nội mạch",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Cấp cứu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Da liễu - Thẩm mỹ da",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Dược",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Gây mê - Hồi sức",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Nội tiết",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 27,
+            "Month": 3,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 14,
+                "tasks_completed_on_time": 13,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 1,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Lồng ngực mạch máu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 4,
+                    "tasks_completed_on_time": 4,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 5,
+                    "tasks_completed_on_time": 5,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 28,
+            "Month": 5,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 12,
+                "tasks_completed_on_time": 5,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 1,
+                "tasks_new_rate": 0,
+                "tasks_processing": 6,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Khoa Dược",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Khoa khám bệnh",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa khám sức khỏe theo yêu cầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Khoa Tiết niệu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Điều dưỡng",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 2,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 1,
+                    "tasks_new_rate": 1,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 29,
+            "Month": 1,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 12,
+                "tasks_completed_on_time": 10,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 1,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 4,
+                    "tasks_completed_on_time": 4,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 29,
+            "Month": 3,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 1,
+                "tasks_completed_on_time": 0,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 1,
+                "tasks_processing_rate": 1
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                }
+            ]
+        },
+        {
+            "Date": 29,
+            "Month": 7,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 1,
+                "tasks_completed_on_time": 0,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 30,
+            "Month": 5,
+            "Year": 2025,
+            "all_departments": {
+                "tasks_assigned": 2,
+                "tasks_completed_on_time": 2,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 30,
+            "Month": 10,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 16,
+                "tasks_completed_on_time": 12,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 4,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Khoa Gây mê - Hồi sức",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công nghệ Thông tin",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Khoa học & Đào tạo",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Trung tâm Truyền thông",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                }
+            ]
+        },
+        {
+            "Date": 30,
+            "Month": 11,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 1,
+                "tasks_completed_on_time": 1,
+                "tasks_completed_on_time_rate": 1,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 31,
+            "Month": 1,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 16,
+                "tasks_completed_on_time": 14,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 0,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Khoa Giải phẫu bệnh",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa khám sức khỏe theo yêu cầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa Vi sinh",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Công tác xã hội",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 5,
+                    "tasks_completed_on_time": 5,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        },
+        {
+            "Date": 31,
+            "Month": 7,
+            "Year": 2024,
+            "all_departments": {
+                "tasks_assigned": 18,
+                "tasks_completed_on_time": 15,
+                "tasks_completed_on_time_rate": 0,
+                "tasks_new": 0,
+                "tasks_new_rate": 0,
+                "tasks_processing": 2,
+                "tasks_processing_rate": 0
+            },
+            "detail_departments": [
+                {
+                    "Name": "Ban Giám đốc",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Đơn vị quản lý đấu thầu",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Khoa mắt",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Bảo hiểm y tế",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Hành chính",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 2,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Kế hoạch tổng hợp",
+                    "tasks_assigned": 2,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Quản trị tòa nhà",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 1,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tài chính Kế toán",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                },
+                {
+                    "Name": "Phòng Tổ chức Cán bộ",
+                    "tasks_assigned": 1,
+                    "tasks_completed_on_time": 0,
+                    "tasks_completed_on_time_rate": 0,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 1,
+                    "tasks_processing_rate": 1
+                },
+                {
+                    "Name": "Phòng Vật tư thiết bị",
+                    "tasks_assigned": 3,
+                    "tasks_completed_on_time": 3,
+                    "tasks_completed_on_time_rate": 1,
+                    "tasks_new": 0,
+                    "tasks_new_rate": 0,
+                    "tasks_processing": 0,
+                    "tasks_processing_rate": 0
+                }
+            ]
+        }
+    ]
+}
