@@ -3041,14 +3041,16 @@ with tab4:
                 }).reset_index()
                 dept_summary['completion_rate'] = (dept_summary['tasks_completed_on_time'] / dept_summary['tasks_assigned'] * 100).fillna(0)
                 
-                # Top 3 phòng ban
-                top_depts = dept_summary.nlargest(3, 'completion_rate')
-                
+                # Top 3 phòng ban theo tổng số công việc được giao
+                top_depts = dept_summary.nlargest(3, 'tasks_assigned')
+
                 col1, col2, col3 = st.columns(3)
                 for i, (idx, dept) in enumerate(top_depts.iterrows()):
                     with [col1, col2, col3][i]:
-                        st.metric(f"🏆 {dept['department']}", f"{dept['completion_rate']:.1f}%", 
-                                f"{dept['tasks_completed_on_time']}/{dept['tasks_assigned']} việc")
+                        completion_rate = (dept['tasks_completed_on_time'] / dept['tasks_assigned'] * 100) if dept['tasks_assigned'] > 0 else 0
+                        st.metric(f"🏆 {dept['department']}",
+                                f"{dept['tasks_completed_on_time']}/{dept['tasks_assigned']} việc",
+                                f"Tỷ lệ: {completion_rate:.1f}%")
             
             st.markdown("---")
             
