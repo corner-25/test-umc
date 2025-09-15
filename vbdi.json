@@ -20408,11 +20408,11 @@
             "year": 2025,
             "documents": 23,
             "contracts": {
-                "total": 4,
+                "total": 5,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 1
+                        "count": 2
                     },
                     {
                         "name": "Khám sức khỏe",
@@ -21208,11 +21208,11 @@
             "year": 2025,
             "documents": 25,
             "contracts": {
-                "total": 68,
+                "total": 73,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 5
+                        "count": 6
                     },
                     {
                         "name": "Khám sức khỏe",
@@ -21224,7 +21224,7 @@
                     },
                     {
                         "name": "Mua sắm thuốc",
-                        "count": 57
+                        "count": 61
                     }
                 ]
             },
@@ -21620,11 +21620,11 @@
             "year": 2025,
             "documents": 29,
             "contracts": {
-                "total": 23,
+                "total": 25,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 23
+                        "count": 25
                     }
                 ]
             },
@@ -21792,15 +21792,19 @@
             "year": 2025,
             "documents": 15,
             "contracts": {
-                "total": 8,
+                "total": 11,
                 "detail": [
                     {
                         "name": "Đào tạo",
-                        "count": 4
+                        "count": 5
                     },
                     {
                         "name": "Khac",
-                        "count": 4
+                        "count": 5
+                    },
+                    {
+                        "name": "Mua sắm dịch vụ",
+                        "count": 1
                     }
                 ]
             },
@@ -21900,7 +21904,7 @@
             "year": 2025,
             "documents": 14,
             "contracts": {
-                "total": 16,
+                "total": 17,
                 "detail": [
                     {
                         "name": "Khac",
@@ -21913,6 +21917,10 @@
                     {
                         "name": "Lắp đặt thiết bị",
                         "count": 5
+                    },
+                    {
+                        "name": "Mua sắm thuốc",
+                        "count": 1
                     }
                 ]
             },
@@ -22093,7 +22101,13 @@
                 ]
             },
             "decisions": {
-                "total": 0
+                "total": 2,
+                "detail": [
+                    {
+                        "name": "Khac",
+                        "count": 2
+                    }
+                ]
             },
             "regulations": {
                 "total": 0
@@ -22105,7 +22119,13 @@
                 "total": 0
             },
             "instruct": {
-                "total": 0
+                "total": 2,
+                "detail": [
+                    {
+                        "name": "Hướng dẫn",
+                        "count": 2
+                    }
+                ]
             }
         },
         {
@@ -22114,7 +22134,7 @@
             "year": 2025,
             "documents": 13,
             "contracts": {
-                "total": 6,
+                "total": 7,
                 "detail": [
                     {
                         "name": "Đào tạo",
@@ -22122,7 +22142,7 @@
                     },
                     {
                         "name": "Khac",
-                        "count": 4
+                        "count": 5
                     },
                     {
                         "name": "Lắp đặt thiết bị",
@@ -22356,7 +22376,7 @@
             "year": 2025,
             "documents": 16,
             "contracts": {
-                "total": 14,
+                "total": 16,
                 "detail": [
                     {
                         "name": "Đào tạo",
@@ -22364,7 +22384,7 @@
                     },
                     {
                         "name": "Khac",
-                        "count": 3
+                        "count": 5
                     },
                     {
                         "name": "Khám sức khỏe",
@@ -22454,7 +22474,7 @@
             "year": 2025,
             "documents": 44,
             "contracts": {
-                "total": 11,
+                "total": 12,
                 "detail": [
                     {
                         "name": "Đào tạo",
@@ -22462,7 +22482,7 @@
                     },
                     {
                         "name": "Khac",
-                        "count": 5
+                        "count": 6
                     },
                     {
                         "name": "Khám sức khỏe",
@@ -22612,11 +22632,11 @@
             "year": 2025,
             "documents": 37,
             "contracts": {
-                "total": 4,
+                "total": 5,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 2
+                        "count": 3
                     },
                     {
                         "name": "Khám sức khỏe",
@@ -22629,11 +22649,11 @@
                 ]
             },
             "decisions": {
-                "total": 9,
+                "total": 10,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 9
+                        "count": 10
                     }
                 ]
             },
@@ -22881,11 +22901,11 @@
                 ]
             },
             "decisions": {
-                "total": 2,
+                "total": 4,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 2
+                        "count": 4
                     }
                 ]
             },
@@ -22990,7 +23010,7 @@
             "date": 29,
             "month": 8,
             "year": 2025,
-            "documents": 20,
+            "documents": 21,
             "contracts": {
                 "total": 12,
                 "detail": [
@@ -23041,11 +23061,11 @@
                 ]
             },
             "decisions": {
-                "total": 18,
+                "total": 20,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 18
+                        "count": 20
                     }
                 ]
             },
@@ -23117,11 +23137,11 @@
                 ]
             },
             "decisions": {
-                "total": 177,
+                "total": 174,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 177
+                        "count": 174
                     }
                 ]
             },
@@ -23157,11 +23177,11 @@
                 ]
             },
             "decisions": {
-                "total": 23,
+                "total": 24,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 23
+                        "count": 24
                     }
                 ]
             },
@@ -23232,8 +23252,12 @@
             "year": 2025,
             "documents": 7,
             "contracts": {
-                "total": 1,
+                "total": 2,
                 "detail": [
+                    {
+                        "name": "Khac",
+                        "count": 1
+                    },
                     {
                         "name": "Khám sức khỏe",
                         "count": 1
@@ -23280,7 +23304,7 @@
             "year": 2025,
             "documents": 19,
             "contracts": {
-                "total": 2,
+                "total": 3,
                 "detail": [
                     {
                         "name": "Đào tạo",
@@ -23288,16 +23312,16 @@
                     },
                     {
                         "name": "Khac",
-                        "count": 1
+                        "count": 2
                     }
                 ]
             },
             "decisions": {
-                "total": 4,
+                "total": 5,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 4
+                        "count": 5
                     }
                 ]
             },
@@ -23350,10 +23374,14 @@
             "year": 2025,
             "documents": 10,
             "contracts": {
-                "total": 3,
+                "total": 4,
                 "detail": [
                     {
                         "name": "Đào tạo",
+                        "count": 1
+                    },
+                    {
+                        "name": "Khac",
                         "count": 1
                     },
                     {
@@ -23388,16 +23416,92 @@
             "date": 12,
             "month": 9,
             "year": 2025,
-            "documents": 14,
+            "documents": 36,
+            "contracts": {
+                "total": 31,
+                "detail": [
+                    {
+                        "name": "Khac",
+                        "count": 30
+                    },
+                    {
+                        "name": "Lắp đặt thiết bị",
+                        "count": 1
+                    }
+                ]
+            },
+            "decisions": {
+                "total": 23,
+                "detail": [
+                    {
+                        "name": "Khac",
+                        "count": 23
+                    }
+                ]
+            },
+            "regulations": {
+                "total": 1,
+                "detail": [
+                    {
+                        "name": "Hành chính",
+                        "count": 1
+                    }
+                ]
+            },
+            "rules": {
+                "total": 0
+            },
+            "procedures": {
+                "total": 0
+            },
+            "instruct": {
+                "total": 0
+            }
+        },
+        {
+            "date": 13,
+            "month": 9,
+            "year": 2025,
+            "documents": 29,
             "contracts": {
                 "total": 0
             },
             "decisions": {
-                "total": 11,
+                "total": 13,
                 "detail": [
                     {
                         "name": "Khac",
-                        "count": 11
+                        "count": 13
+                    }
+                ]
+            },
+            "regulations": {
+                "total": 0
+            },
+            "rules": {
+                "total": 0
+            },
+            "procedures": {
+                "total": 0
+            },
+            "instruct": {
+                "total": 0
+            }
+        },
+        {
+            "date": 15,
+            "month": 9,
+            "year": 2025,
+            "documents": 22,
+            "contracts": {
+                "total": 0
+            },
+            "decisions": {
+                "total": 4,
+                "detail": [
+                    {
+                        "name": "Khac",
+                        "count": 4
                     }
                 ]
             },
