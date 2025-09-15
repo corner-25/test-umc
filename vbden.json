@@ -10133,9 +10133,9 @@
             "response_required_Email": 0,
             "response_required_DienThoai": 0,
             "response_required_PhanMem": 0,
-            "processed_on_time": 3,
+            "processed_on_time": 4,
             "processed_rate_on_time": 0,
-            "processed_late": 79,
+            "processed_late": 78,
             "processed_rate_late": 1,
             "total_incoming_detail": {
                 "send_name": "Bộ Y Tế",
@@ -10172,9 +10172,9 @@
             "response_required_Email": 0,
             "response_required_DienThoai": 0,
             "response_required_PhanMem": 3,
-            "processed_on_time": 4,
+            "processed_on_time": 5,
             "processed_rate_on_time": 0,
-            "processed_late": 201,
+            "processed_late": 200,
             "processed_rate_late": 1,
             "total_incoming_detail": {
                 "send_name": "Bộ Y Tế",
@@ -10192,9 +10192,9 @@
             "response_required_Email": 0,
             "response_required_DienThoai": 0,
             "response_required_PhanMem": 0,
-            "processed_on_time": 1,
+            "processed_on_time": 3,
             "processed_rate_on_time": 0,
-            "processed_late": 35,
+            "processed_late": 33,
             "processed_rate_late": 1,
             "total_incoming_detail": {
                 "send_name": "Bộ Y Tế",
@@ -10212,9 +10212,9 @@
             "response_required_Email": 0,
             "response_required_DienThoai": 0,
             "response_required_PhanMem": 0,
-            "processed_on_time": 1,
+            "processed_on_time": 3,
             "processed_rate_on_time": 0,
-            "processed_late": 96,
+            "processed_late": 94,
             "processed_rate_late": 1,
             "total_incoming_detail": {
                 "send_name": "Bộ Y Tế",
@@ -10232,9 +10232,9 @@
             "response_required_Email": 0,
             "response_required_DienThoai": 0,
             "response_required_PhanMem": 0,
-            "processed_on_time": 1,
+            "processed_on_time": 2,
             "processed_rate_on_time": 0,
-            "processed_late": 51,
+            "processed_late": 50,
             "processed_rate_late": 1,
             "total_incoming_detail": {
                 "send_name": "Bộ Y Tế",
@@ -10245,20 +10245,80 @@
             "date": 12,
             "month": 9,
             "year": 2025,
-            "total_incoming": 52,
-            "no_response_required": 36,
-            "response_required": 16,
-            "response_required_VanBan": 16,
+            "total_incoming": 91,
+            "no_response_required": 55,
+            "response_required": 36,
+            "response_required_VanBan": 36,
+            "response_required_Email": 0,
+            "response_required_DienThoai": 0,
+            "response_required_PhanMem": 0,
+            "processed_on_time": 4,
+            "processed_rate_on_time": 0,
+            "processed_late": 87,
+            "processed_rate_late": 1,
+            "total_incoming_detail": {
+                "send_name": "Bộ Y Tế",
+                "total": 6
+            }
+        },
+        {
+            "date": 13,
+            "month": 9,
+            "year": 2025,
+            "total_incoming": 31,
+            "no_response_required": 27,
+            "response_required": 4,
+            "response_required_VanBan": 3,
+            "response_required_Email": 0,
+            "response_required_DienThoai": 0,
+            "response_required_PhanMem": 1,
+            "processed_on_time": 1,
+            "processed_rate_on_time": 0,
+            "processed_late": 30,
+            "processed_rate_late": 1,
+            "total_incoming_detail": {
+                "send_name": "Đại học Y Dược TP. Hồ Chí Minh",
+                "total": 1
+            }
+        },
+        {
+            "date": 14,
+            "month": 9,
+            "year": 2025,
+            "total_incoming": 1,
+            "no_response_required": 1,
+            "response_required": 0,
+            "response_required_VanBan": 0,
             "response_required_Email": 0,
             "response_required_DienThoai": 0,
             "response_required_PhanMem": 0,
             "processed_on_time": 0,
             "processed_rate_on_time": 0,
-            "processed_late": 52,
+            "processed_late": 1,
+            "processed_rate_late": 1,
+            "total_incoming_detail": {
+                "send_name": "Khác",
+                "total": 1
+            }
+        },
+        {
+            "date": 15,
+            "month": 9,
+            "year": 2025,
+            "total_incoming": 41,
+            "no_response_required": 39,
+            "response_required": 2,
+            "response_required_VanBan": 1,
+            "response_required_Email": 0,
+            "response_required_DienThoai": 0,
+            "response_required_PhanMem": 0,
+            "processed_on_time": 0,
+            "processed_rate_on_time": 0,
+            "processed_late": 41,
             "processed_rate_late": 1,
             "total_incoming_detail": {
                 "send_name": "Bộ Y Tế",
-                "total": 4
+                "total": 8
             }
         }
     ]
