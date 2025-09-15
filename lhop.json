@@ -48,7 +48,7 @@
             "Date": 31,
             "Month": 3,
             "Year": 2025,
-            "meeting_schedules": 39
+            "meeting_schedules": 38
         },
         {
             "Date": 1,
@@ -120,7 +120,7 @@
             "Date": 16,
             "Month": 4,
             "Year": 2025,
-            "meeting_schedules": 148
+            "meeting_schedules": 147
         },
         {
             "Date": 17,
@@ -426,7 +426,7 @@
             "Date": 16,
             "Month": 6,
             "Year": 2025,
-            "meeting_schedules": 27
+            "meeting_schedules": 26
         },
         {
             "Date": 17,
@@ -811,6 +811,36 @@
             "Month": 9,
             "Year": 2025,
             "meeting_schedules": 18
+        },
+        {
+            "Date": 10,
+            "Month": 9,
+            "Year": 2025,
+            "meeting_schedules": 4
+        },
+        {
+            "Date": 11,
+            "Month": 9,
+            "Year": 2025,
+            "meeting_schedules": 1
+        },
+        {
+            "Date": 12,
+            "Month": 9,
+            "Year": 2025,
+            "meeting_schedules": 4
+        },
+        {
+            "Date": 13,
+            "Month": 9,
+            "Year": 2025,
+            "meeting_schedules": 4
+        },
+        {
+            "Date": 15,
+            "Month": 9,
+            "Year": 2025,
+            "meeting_schedules": 3
         }
     ]
 }
