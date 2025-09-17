@@ -137,24 +137,34 @@ st.sidebar.markdown("---")
 # Hàm tiện ích để áp dụng filter toàn cục
 def apply_global_filter(df, date_col='datetime'):
     """Áp dụng bộ lọc toàn cục cho DataFrame"""
-    if not enable_global_filter:
+    if not enable_global_filter or df is None or df.empty:
         return df
-    
-    filtered_df = df.copy()
-    
-    # Áp dụng filter ngày
-    if global_date_filter is not None:
-        # Kiểm tra nếu là tuple/list với 2 phần tử
-        if isinstance(global_date_filter, (list, tuple)) and len(global_date_filter) == 2:
-            filtered_df = filtered_df[
-                (filtered_df[date_col] >= pd.to_datetime(global_date_filter[0])) & 
-                (filtered_df[date_col] <= pd.to_datetime(global_date_filter[1]))
-            ]
-        # Nếu chỉ là 1 ngày, filter từ ngày đó trở đi
-        elif hasattr(global_date_filter, '__iter__') == False:  # single date
-            filtered_df = filtered_df[filtered_df[date_col] >= pd.to_datetime(global_date_filter)]
-    
-    return filtered_df
+
+    try:
+        filtered_df = df.copy()
+
+        # Kiểm tra xem cột datetime có tồn tại không
+        if date_col not in filtered_df.columns:
+            return filtered_df
+
+        # Áp dụng filter ngày
+        if global_date_filter is not None:
+            # Kiểm tra nếu là tuple/list với 2 phần tử
+            if isinstance(global_date_filter, (list, tuple)) and len(global_date_filter) == 2:
+                start_date, end_date = global_date_filter
+                if start_date is not None and end_date is not None:
+                    filtered_df = filtered_df[
+                        (filtered_df[date_col] >= pd.to_datetime(start_date)) &
+                        (filtered_df[date_col] <= pd.to_datetime(end_date))
+                    ]
+            # Nếu chỉ là 1 ngày, filter từ ngày đó trở đi
+            elif global_date_filter is not None:
+                filtered_df = filtered_df[filtered_df[date_col] >= pd.to_datetime(global_date_filter)]
+
+        return filtered_df
+    except Exception as e:
+        st.error(f"Lỗi khi áp dụng bộ lọc toàn cục: {e}")
+        return df
 
 # Hàm xử lý dữ liệu văn bản đến
 def process_incoming_documents_data(uploaded_file):
@@ -2546,7 +2556,7 @@ with tab1:
                     st.plotly_chart(fig_cat, use_container_width=True)
                 
                 with col_b:
-                    st.metric("Tổng", f"{category_data['count'].sum():,}")
+                    st.metric("Tổng", f"{int(category_data['count'].sum()):,}")
                 
                 with col_c:
                     st.metric("TB/ngày", f"{category_data['count'].mean():.1f}")
@@ -2632,7 +2642,7 @@ with tab2:
 
         with col1:
             total_docs = df['total_incoming'].sum()
-            st.metric("📑 Tổng văn bản", f"{total_docs:,}")
+            st.metric("📑 Tổng văn bản", f"{int(total_docs):,}")
 
         with col2:
             avg_daily = df['total_incoming'].mean()
@@ -2640,11 +2650,11 @@ with tab2:
 
         with col3:
             total_on_time = df['processed_on_time'].sum()
-            st.metric("✅ Xử lý đúng hạn", f"{total_on_time:,}")
+            st.metric("✅ Xử lý đúng hạn", f"{int(total_on_time):,}")
 
         with col4:
             total_late = df['processed_late'].sum()
-            st.metric("⚠️ Xử lý trễ hạn", f"{total_late:,}")
+            st.metric("⚠️ Xử lý trễ hạn", f"{int(total_late):,}")
 
         with col5:
             if total_docs > 0:
@@ -2659,23 +2669,23 @@ with tab2:
 
         with col1:
             no_response = df['no_response_required'].sum()
-            st.metric("🔕 Không cần phản hồi", f"{no_response:,}")
+            st.metric("🔕 Không cần phản hồi", f"{int(no_response):,}")
 
         with col2:
             need_response = df['response_required'].sum()
-            st.metric("📢 Cần phản hồi", f"{need_response:,}")
+            st.metric("📢 Cần phản hồi", f"{int(need_response):,}")
 
         with col3:
             vanban_response = df['response_required_VanBan'].sum()
-            st.metric("📄 PH Văn bản", f"{vanban_response:,}")
+            st.metric("📄 PH Văn bản", f"{int(vanban_response):,}")
 
         with col4:
             email_response = df['response_required_Email'].sum()
-            st.metric("📧 PH Email", f"{email_response:,}")
+            st.metric("📧 PH Email", f"{int(email_response):,}")
 
         with col5:
             phone_response = df['response_required_DienThoai'].sum()
-            st.metric("📞 PH Điện thoại", f"{phone_response:,}")
+            st.metric("📞 PH Điện thoại", f"{int(phone_response):,}")
 
         st.markdown("---")
 
@@ -2812,16 +2822,16 @@ with tab3:
                 total_instruct = df_out['instruct_total'].sum() if 'instruct_total' in df_out.columns else 0
 
                 total_outgoing = total_docs + total_contracts + total_decisions + total_regulations + total_rules + total_procedures + total_instruct
-                st.metric("📄 Tổng văn bản đi", total_outgoing)
+                st.metric("📄 Tổng văn bản đi", f"{int(total_outgoing):,}")
 
             with col2:
-                st.metric("📝 Văn bản phát hành", total_docs)
+                st.metric("📝 Văn bản phát hành", f"{int(total_docs):,}")
 
             with col3:
-                st.metric("📁 Hợp đồng", total_contracts)
+                st.metric("📁 Hợp đồng", f"{int(total_contracts):,}")
 
             with col4:
-                st.metric("⚖️ Quyết định", total_decisions)
+                st.metric("⚖️ Quyết định", f"{int(total_decisions):,}")
             
             with col5:
                 # Tính trung bình dựa trên tổng văn bản thực tế
@@ -2836,16 +2846,16 @@ with tab3:
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
-                st.metric("📜 Quy định", total_regulations)
+                st.metric("📜 Quy định", f"{int(total_regulations):,}")
 
             with col2:
-                st.metric("📋 Quy chế", total_rules)
+                st.metric("📋 Quy chế", f"{int(total_rules):,}")
 
             with col3:
-                st.metric("🔄 Thủ tục", total_procedures)
+                st.metric("🔄 Thủ tục", f"{int(total_procedures):,}")
 
             with col4:
-                st.metric("📚 Hướng dẫn", total_instruct)
+                st.metric("📚 Hướng dẫn", f"{int(total_instruct):,}")
             
             st.markdown("---")
             
@@ -2998,6 +3008,11 @@ with tab4:
             # Áp dụng filter toàn cục
             df_all_tasks_filtered = apply_global_filter(df_all_tasks)
             df_detail_tasks_filtered = apply_global_filter(df_detail_tasks)
+
+            # Kiểm tra dữ liệu sau khi filter
+            if df_all_tasks_filtered.empty:
+                st.warning("⚠️ Không có dữ liệu nào phù hợp với bộ lọc hiện tại. Vui lòng điều chỉnh bộ lọc.")
+                st.stop()
             # Thống kê tổng quan
             st.markdown("### 📊 Thống kê tổng quan công việc")
             
@@ -3172,7 +3187,7 @@ with tab5:
             
             with col1:
                 total_meetings = df_meetings['meeting_schedules'].sum()
-                st.metric("📅 Tổng cuộc họp", f"{total_meetings:,}")
+                st.metric("📅 Tổng cuộc họp", f"{int(total_meetings):,}")
             
             with col2:
                 avg_daily = df_meetings['meeting_schedules'].mean()
@@ -3346,9 +3361,9 @@ with tab6:
         cancel_rate_avg = (total_cancels / total_bookings * 100) if total_bookings > 0 else 0
         
         with col1:
-            st.metric("📅 Tổng đăng ký", f"{total_bookings:,}")
+            st.metric("📅 Tổng đăng ký", f"{int(total_bookings):,}")
         with col2:
-            st.metric("❌ Tổng hủy", f"{total_cancels:,}")
+            st.metric("❌ Tổng hủy", f"{int(total_cancels):,}")
         with col3:
             st.metric("📊 TB/ngày", f"{avg_daily:.1f}")
         with col4:
