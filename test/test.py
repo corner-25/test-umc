@@ -6,6 +6,12 @@ from plotly.subplots import make_subplots
 import json
 from datetime import datetime, timedelta
 import os, base64
+import requests
+from io import BytesIO, StringIO
+from api_handler import show_quick_sync_button
+
+# Tắt FutureWarning
+pd.set_option('future.no_silent_downcasting', True)
 
 # Cấu hình trang
 st.set_page_config(
@@ -57,6 +63,280 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
+# ===== GITHUB MANAGER CLASS =====
+class GitHubDataManager:
+    def __init__(self):
+        try:
+            self.github_token = st.secrets.get("github_token", "")
+            self.github_owner = st.secrets.get("github_owner", "")
+            self.github_repo = st.secrets.get("github_repo", "")
+        except Exception:
+            # Nếu không có secrets, sử dụng giá trị mặc định
+            self.github_token = ""
+            self.github_owner = ""
+            self.github_repo = ""
+
+    def check_github_connection(self):
+        """Kiểm tra kết nối GitHub"""
+        if not all([self.github_token, self.github_owner, self.github_repo]):
+            return False, "❌ Chưa cấu hình GitHub credentials"
+
+        try:
+            headers = {"Authorization": f"token {self.github_token}"}
+            url = f"https://api.github.com/repos/{self.github_owner}/{self.github_repo}"
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                return True, "✅ Kết nối GitHub thành công"
+            else:
+                return False, f"❌ Lỗi kết nối GitHub: {response.status_code}"
+        except Exception as e:
+            return False, f"❌ Lỗi kết nối: {str(e)}"
+
+    def load_current_data(self):
+        """Tải dữ liệu hiện tại từ GitHub"""
+        try:
+            headers = {"Authorization": f"token {self.github_token}"}
+
+            # Tải file current_dashboard_data.json
+            file_url = f"https://api.github.com/repos/{self.github_owner}/{self.github_repo}/contents/current_dashboard_data.json"
+            response = requests.get(file_url, headers=headers)
+
+            if response.status_code == 200:
+                file_info = response.json()
+                download_url = file_info['download_url']
+
+                # Tải và đọc file JSON
+                file_response = requests.get(download_url)
+                if file_response.status_code == 200:
+                    json_data = file_response.json()
+
+                    # Chuyển JSON thành DataFrame
+                    if isinstance(json_data, dict) and 'data' in json_data:
+                        df = pd.DataFrame(json_data['data'])
+                    elif isinstance(json_data, list):
+                        df = pd.DataFrame(json_data)
+                    else:
+                        df = pd.DataFrame(json_data)
+
+                    metadata = {
+                        'filename': 'current_dashboard_data.json',
+                        'source': 'GitHub',
+                        'sha': file_info['sha'],
+                        'last_modified': file_info.get('last_modified', 'N/A'),
+                        'size': file_info['size']
+                    }
+
+                    return df, metadata
+            else:
+                return None, None
+
+        except Exception as e:
+            st.error(f"Lỗi tải dữ liệu từ GitHub: {str(e)}")
+            return None, None
+
+# ===== DATA MANAGER CLASS =====
+class DataManager:
+    def __init__(self):
+        self.data = None
+        self.metadata = None
+
+    def load_data_from_file(self, file):
+        """Load dữ liệu từ file upload"""
+        try:
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif file.name.endswith('.json'):
+                df = pd.read_json(file)
+            elif file.name.endswith(('.xlsx', '.xls')):
+                # Đọc Excel, nếu có nhiều sheet thì lấy sheet đầu tiên
+                try:
+                    df = pd.read_excel(file, sheet_name=0)
+                except Exception as e:
+                    # Nếu lỗi, thử đọc với engine khác
+                    df = pd.read_excel(file, engine='openpyxl' if file.name.endswith('.xlsx') else 'xlrd')
+            else:
+                return False, "❌ Format file không hỗ trợ. Chỉ hỗ trợ CSV, JSON, Excel (.xlsx, .xls)"
+
+            # Validate dữ liệu
+            required_columns = ['Tuần', 'Tháng', 'Nội dung']
+            if not all(col in df.columns for col in required_columns):
+                return False, f"❌ Thiếu cột bắt buộc: {required_columns}"
+
+            self.data = df
+            self.metadata = {
+                'filename': file.name,
+                'file_type': file.name.split('.')[-1].upper(),
+                'rows': len(df),
+                'columns': list(df.columns),
+                'categories': df['Danh mục'].unique().tolist() if 'Danh mục' in df.columns else [],
+                'upload_time': pd.Timestamp.now()
+            }
+
+            return True, "✅ Tải dữ liệu thành công"
+
+        except Exception as e:
+            return False, f"❌ Lỗi đọc file: {str(e)}"
+
+    def load_data_from_github(self, github_df, github_metadata):
+        """Load dữ liệu từ GitHub"""
+        try:
+            # Validate dữ liệu
+            required_columns = ['Tuần', 'Tháng', 'Nội dung']
+            if not all(col in github_df.columns for col in required_columns):
+                return False, f"❌ Thiếu cột bắt buộc: {required_columns}"
+
+            self.data = github_df
+            self.metadata = {
+                'filename': github_metadata['filename'],
+                'file_type': 'GitHub',
+                'rows': len(github_df),
+                'columns': list(github_df.columns),
+                'categories': github_df['Danh mục'].unique().tolist() if 'Danh mục' in github_df.columns else [],
+                'source': github_metadata['source'],
+                'sha': github_metadata['sha'],
+                'upload_time': pd.Timestamp.now()
+            }
+
+            return True, "✅ Tải dữ liệu từ GitHub thành công"
+
+        except Exception as e:
+            return False, f"❌ Lỗi xử lý dữ liệu GitHub: {str(e)}"
+
+    def get_category_data(self, category_name):
+        """Lấy dữ liệu theo danh mục"""
+        if self.data is None:
+            return None
+
+        if 'Danh mục' not in self.data.columns:
+            return self.data  # Trả về toàn bộ nếu không có cột Danh mục
+
+        filtered_data = self.data[self.data['Danh mục'] == category_name]
+        return filtered_data if not filtered_data.empty else None
+
+    def get_other_categories_data(self, excluded_categories):
+        """Lấy dữ liệu cho các danh mục không thuộc danh sách loại trừ"""
+        if self.data is None:
+            return None
+
+        if 'Danh mục' not in self.data.columns:
+            return self.data
+
+        filtered_data = self.data[~self.data['Danh mục'].isin(excluded_categories)]
+        return filtered_data if not filtered_data.empty else None
+
+# Initialize managers
+if 'data_manager' not in st.session_state:
+    st.session_state['data_manager'] = DataManager()
+
+if 'github_manager' not in st.session_state:
+    st.session_state['github_manager'] = GitHubDataManager()
+
+data_manager = st.session_state['data_manager']
+github_manager = st.session_state['github_manager']
+
+# ===== SIDEBAR GITHUB CONNECTION =====
+st.sidebar.header("☁️ Kết nối GitHub")
+
+# Kiểm tra kết nối GitHub
+connected, message = github_manager.check_github_connection()
+
+if connected:
+    st.sidebar.success("✅ GitHub kết nối thành công")
+
+    # Thử tải dữ liệu từ GitHub
+    try:
+        github_data, github_metadata = github_manager.load_current_data()
+
+        if github_data is not None and github_metadata:
+            # Có dữ liệu từ GitHub
+            st.sidebar.info(f"""
+📊 **Dữ liệu từ GitHub:**
+- File: {github_metadata['filename']}
+- Kích thước: {github_metadata['size']:,} bytes
+            """)
+
+            # Load vào data manager
+            success, load_message = data_manager.load_data_from_github(github_data, github_metadata)
+            if success:
+                st.sidebar.success("✅ Đã tải dữ liệu từ GitHub")
+
+                # Button refresh
+                if st.sidebar.button("🔄 Refresh từ GitHub"):
+                    st.rerun()
+            else:
+                st.sidebar.warning(f"⚠️ {load_message}")
+        else:
+            st.sidebar.warning("📭 Chưa có dữ liệu trên GitHub")
+
+    except Exception as github_error:
+        st.sidebar.error(f"❌ Lỗi GitHub: {str(github_error)}")
+else:
+    st.sidebar.warning(message)
+
+st.sidebar.markdown("---")
+
+# ===== SIDEBAR API SYNC =====
+st.sidebar.header("🔄 Đồng Bộ API")
+show_quick_sync_button()
+
+st.sidebar.markdown("---")
+
+# ===== SIDEBAR UPLOAD FILE =====
+st.sidebar.header("📁 Tải dữ liệu thủ công")
+
+# Upload file cho dữ liệu mới (Tổ xe, Tổng đài, etc.)
+uploaded_file_new = st.sidebar.file_uploader(
+    "📊 Upload dữ liệu mới",
+    type=['csv', 'json', 'xlsx', 'xls'],
+    key="new_data_upload",
+    help="Hỗ trợ: CSV, JSON, Excel (.xlsx, .xls)\nDành cho các tab: Tổ xe, Tổng đài, Hệ thống thư ký, Bãi giữ xe, Sự kiện, Khác"
+)
+
+# Xử lý file upload
+if uploaded_file_new is not None:
+    success, message = data_manager.load_data_from_file(uploaded_file_new)
+
+    if success:
+        st.sidebar.success(message)
+
+        # Hiển thị thông tin file
+        if data_manager.metadata:
+            st.sidebar.info(f"📄 **{data_manager.metadata['filename']}**")
+            st.sidebar.info(f"📊 **{data_manager.metadata['file_type']}** - {data_manager.metadata['rows']:,} dòng")
+
+            # Hiển thị các danh mục có trong file
+            if data_manager.metadata['categories']:
+                st.sidebar.write("📋 **Danh mục có trong file:**")
+                for cat in data_manager.metadata['categories']:
+                    st.sidebar.write(f"- {cat}")
+            else:
+                st.sidebar.write("📋 **Cột có trong file:**")
+                for col in data_manager.metadata['columns'][:5]:  # Hiển thị tối đa 5 cột
+                    st.sidebar.write(f"- {col}")
+                if len(data_manager.metadata['columns']) > 5:
+                    st.sidebar.write(f"- ... và {len(data_manager.metadata['columns']) - 5} cột khác")
+    else:
+        st.sidebar.error(message)
+
+# Button để xóa dữ liệu đã upload
+if data_manager.data is not None:
+    if st.sidebar.button("🗑️ Xóa dữ liệu đã tải"):
+        data_manager.data = None
+        data_manager.metadata = None
+        st.rerun()
+
+# Hiển thị trạng thái dữ liệu
+if data_manager.data is not None and data_manager.metadata:
+    if data_manager.metadata['file_type'] == 'GitHub':
+        st.sidebar.success(f"☁️ Dữ liệu từ GitHub: {data_manager.metadata['filename']}")
+    else:
+        st.sidebar.success(f"✅ Dữ liệu thủ công: {data_manager.metadata['filename']}")
+else:
+    st.sidebar.info("📭 Chưa có dữ liệu được tải")
+
+st.sidebar.markdown("---")
 
 # HEADER: logo + title on one line (flexbox)
 try:
@@ -134,6 +414,43 @@ if enable_global_filter:
 
 st.sidebar.markdown("---")
 
+# Hàm tiện ích để load dữ liệu từ GitHub
+def load_data_from_github(filename):
+    """Load dữ liệu từ GitHub private repo"""
+    try:
+        github_token = st.secrets.get("github_token", "")
+        github_owner = st.secrets.get("github_owner", "")
+        github_repo = st.secrets.get("github_repo", "")
+
+        if not all([github_token, github_owner, github_repo]):
+            st.error(f"❌ Chưa cấu hình GitHub để load {filename}")
+            return None
+
+        url = f"https://api.github.com/repos/{github_owner}/{github_repo}/contents/{filename}"
+        headers = {"Authorization": f"token {github_token}"}
+
+        response = requests.get(url, headers=headers, verify=False)
+
+        if response.status_code == 200:
+            content = response.json()
+            file_content = base64.b64decode(content["content"]).decode('utf-8')
+            data = json.loads(file_content)
+
+            # Xử lý data structure
+            if isinstance(data, dict) and "data" in data:
+                df = pd.DataFrame(data["data"])
+            else:
+                df = pd.DataFrame(data)
+
+            return df
+        else:
+            st.warning(f"⚠️ Không tìm thấy {filename} trên GitHub")
+            return None
+
+    except Exception as e:
+        st.error(f"❌ Lỗi load {filename} từ GitHub: {str(e)}")
+        return None
+
 # Hàm tiện ích để áp dụng filter toàn cục
 def apply_global_filter(df, date_col='datetime'):
     """Áp dụng bộ lọc toàn cục cho DataFrame"""
@@ -141,11 +458,12 @@ def apply_global_filter(df, date_col='datetime'):
         return df
 
     try:
-        filtered_df = df.copy()
-
         # Kiểm tra xem cột datetime có tồn tại không
-        if date_col not in filtered_df.columns:
-            return filtered_df
+        if date_col not in df.columns:
+            # Nếu không có cột datetime, bỏ qua filter (dữ liệu theo tuần/tháng)
+            return df
+
+        filtered_df = df.copy()
 
         # Áp dụng filter ngày
         if global_date_filter is not None:
@@ -163,10 +481,9 @@ def apply_global_filter(df, date_col='datetime'):
 
         return filtered_df
     except Exception as e:
-        st.error(f"Lỗi khi áp dụng bộ lọc toàn cục: {e}")
+        st.warning(f"⚠️ Bộ lọc toàn cục không áp dụng được cho dữ liệu này (dữ liệu theo tuần/tháng)")
         return df
 
-# Hàm xử lý dữ liệu văn bản đến
 def process_incoming_documents_data(uploaded_file):
     try:
         if uploaded_file.type == "application/json":
@@ -2339,11 +2656,11 @@ def create_incoming_docs_charts(df, period_type='Tuần'):
         fig_processed = go.Figure()
         fig_processed.add_trace(go.Scatter(x=processed_summary['period'],
                                          y=processed_summary['processed_on_time'],
-                                         mode='lines+markers', name='Đúng hạn',
+                                         mode='lines', name='Đúng hạn',
                                          line=dict(color='green')))
         fig_processed.add_trace(go.Scatter(x=processed_summary['period'],
                                          y=processed_summary['processed_late'],
-                                         mode='lines+markers', name='Trễ hạn',
+                                         mode='lines', name='Trễ hạn',
                                          line=dict(color='red')))
         fig_processed.update_layout(title=f'⏰ Tình hình xử lý văn bản theo {period_type.lower()}',
                                   xaxis_title=x_title, yaxis_title="Số lượng")
@@ -2420,50 +2737,64 @@ def create_incoming_docs_charts(df, period_type='Tuần'):
                 )
                 st.plotly_chart(fig_simple, use_container_width=True)
 
-# Tạo tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "🏠 Tổng quan", 
-    "📥 Văn bản đến", 
-    "📤 Văn bản đi", 
-    "📋 Quản lý công việc", 
-    "📅 Quản lý lịch họp", 
-    "🏢 Quản lý phòng họp"
+# CSS cho tabs 2 hàng
+st.markdown("""
+<style>
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.stTabs [data-baseweb="tab"] {
+    height: auto;
+    white-space: nowrap;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Tạo tabs với tên ngắn gọn hơn
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
+    "🏠 Tổng quan",
+    "📥 VB Đến",
+    "📤 VB Đi",
+    "🚗 Tổ xe",
+    "📞 Tổng đài",
+    "👥 Thư ký",
+    "🅿️ Bãi xe",
+    "🎉 Sự kiện",
+    "📋 Công việc",
+    "📅 Lịch họp",
+    "🏢 Phòng họp",
+    "🔗 Khác"
 ])
 
 # Tab 1: Tổng quan
 with tab1:
     st.markdown('<div class="tab-header">📊 Tổng quan Phòng Hành chính</div>', unsafe_allow_html=True)
     
-    def load_summary_data():
-        """Load dữ liệu tổng hợp từ tonghop.json"""
-        try:
-            with open('tonghop.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['data'])
-                
-                # Tạo cột datetime
-                df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
-                
-                # Chuẩn hóa category names
-                df['category_clean'] = df['category'].str.replace(' ', '_').str.lower()
-                df['category_vi'] = df['category'].map({
-                    'Van ban den': '📥 Văn bản đến',
-                    'Van ban phat hanh di': '📤 Văn bản đi', 
-                    'Van ban phat hanh quyet dinh': '📜 Quyết định',
-                    'Van ban phat hanhquy dinh': '📋 Quy định',
-                    'Van ban phat hanhquy trinh': '📋 Quy trình',
-                    'Van ban phat hanh hop dong': '📝 Hợp đồng',
-                    'Quan ly phong hop': '🏢 Phòng họp',
-                    'Quan ly cong viec': '💼 Công việc'
-                }).fillna('🔸 ' + df['category'])
-                
-                return df
-        except Exception as e:
-            st.error(f"Lỗi khi load dữ liệu tổng hợp: {e}")
-            return None
-    
-    # Load dữ liệu
-    df_summary = load_summary_data()
+    # Load dữ liệu từ GitHub
+    df_summary = load_data_from_github('tonghop.json')
+
+    if df_summary is not None:
+        # Tạo cột datetime
+        df_summary['datetime'] = pd.to_datetime(df_summary[['year', 'month', 'date']].rename(columns={'date': 'day'}))
+
+        # Chuẩn hóa category names
+        df_summary['category_clean'] = df_summary['category'].str.replace(' ', '_').str.lower()
+        df_summary['category_vi'] = df_summary['category'].map({
+            'Van ban den': '📥 Văn bản đến',
+            'Van ban phat hanh di': '📤 Văn bản đi',
+            'Van ban phat hanh quyet dinh': '📜 Quyết định',
+            'Van ban phat hanhquy dinh': '📋 Quy định',
+            'Van ban phat hanhquy trinh': '📋 Quy trình',
+            'Van ban phat hanh hop dong': '📝 Hợp đồng',
+            'Quan ly phong hop': '🏢 Phòng họp',
+            'Quan ly cong viec': '💼 Công việc'
+        }).fillna('🔸 ' + df_summary['category'])
     
     if df_summary is not None:
         # Áp dụng global filter
@@ -2599,37 +2930,26 @@ with tab1:
 with tab2:
     st.markdown('<div class="tab-header">📥 Quản lý Văn bản Đến</div>', unsafe_allow_html=True)
     
-    # Load dữ liệu từ file có sẵn
-    def load_incoming_docs_data():
-        """Load dữ liệu văn bản đến từ file vbden.json"""
-        try:
-            with open('vbden.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['data'] if isinstance(data, dict) and 'data' in data else data)
+    # Load dữ liệu từ GitHub
+    df = load_data_from_github('vanbanden.json')
 
-                # Xử lý dữ liệu tương tự như process_incoming_documents_data
-                if 'datetime' not in df.columns:
-                    if all(col in df.columns for col in ['year', 'month', 'date']):
-                        df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
-                    elif all(col in df.columns for col in ['Year', 'Month', 'Date']):
-                        df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
+    if df is not None:
+        # Xử lý dữ liệu
+        if 'datetime' not in df.columns:
+            if all(col in df.columns for col in ['year', 'month', 'date']):
+                df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
+            elif all(col in df.columns for col in ['Year', 'Month', 'Date']):
+                df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
 
-                # Thêm các cột cần thiết
-                df['weekday'] = df['datetime'].dt.day_name()
-                df['weekday_vi'] = df['weekday'].map({
-                    'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
-                    'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
-                })
-                df['year'] = df['datetime'].dt.year
-                df['month'] = df['datetime'].dt.month
-                df['week'] = df['datetime'].dt.isocalendar().week
-
-                return df
-        except Exception as e:
-            st.error(f"Lỗi khi load dữ liệu từ vbden.json: {e}")
-            return None
-
-    df = load_incoming_docs_data()
+        # Thêm các cột cần thiết
+        df['weekday'] = df['datetime'].dt.day_name()
+        df['weekday_vi'] = df['weekday'].map({
+            'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
+            'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
+        })
+        df['year'] = df['datetime'].dt.year
+        df['month'] = df['datetime'].dt.month
+        df['week'] = df['datetime'].dt.isocalendar().week
 
     if df is not None:
         # Áp dụng filter toàn cục
@@ -2745,62 +3065,51 @@ with tab2:
 with tab3:
     st.markdown('<div class="tab-header">📤 Quản lý Văn bản Đi</div>', unsafe_allow_html=True)
     
-    # Load dữ liệu từ file có sẵn
-    def load_outgoing_docs_data():
-        """Load dữ liệu văn bản đi từ file vbdi.json"""
-        try:
-            with open('vbdi.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['data'] if isinstance(data, dict) and 'data' in data else data)
+    # Load dữ liệu từ GitHub
+    df_out = load_data_from_github('vanbanphathanh.json')
 
-                # Flatten nested structure để tạo các cột _total
-                for index, row in df.iterrows():
-                    # Extract totals from nested objects
-                    if 'contracts' in row and isinstance(row['contracts'], dict):
-                        df.loc[index, 'contracts_total'] = row['contracts'].get('total', 0)
-                    if 'decisions' in row and isinstance(row['decisions'], dict):
-                        df.loc[index, 'decisions_total'] = row['decisions'].get('total', 0)
-                    if 'regulations' in row and isinstance(row['regulations'], dict):
-                        df.loc[index, 'regulations_total'] = row['regulations'].get('total', 0)
-                    if 'rules' in row and isinstance(row['rules'], dict):
-                        df.loc[index, 'rules_total'] = row['rules'].get('total', 0)
-                    if 'procedures' in row and isinstance(row['procedures'], dict):
-                        df.loc[index, 'procedures_total'] = row['procedures'].get('total', 0)
-                    if 'instruct' in row and isinstance(row['instruct'], dict):
-                        df.loc[index, 'instruct_total'] = row['instruct'].get('total', 0)
+    if df_out is not None:
+        # Flatten nested structure để tạo các cột _total
+        for index, row in df_out.iterrows():
+            # Extract totals from nested objects
+            if 'contracts' in row and isinstance(row['contracts'], dict):
+                df_out.loc[index, 'contracts_total'] = row['contracts'].get('total', 0)
+            if 'decisions' in row and isinstance(row['decisions'], dict):
+                df_out.loc[index, 'decisions_total'] = row['decisions'].get('total', 0)
+            if 'regulations' in row and isinstance(row['regulations'], dict):
+                df_out.loc[index, 'regulations_total'] = row['regulations'].get('total', 0)
+            if 'rules' in row and isinstance(row['rules'], dict):
+                df_out.loc[index, 'rules_total'] = row['rules'].get('total', 0)
+            if 'procedures' in row and isinstance(row['procedures'], dict):
+                df_out.loc[index, 'procedures_total'] = row['procedures'].get('total', 0)
+            if 'instruct' in row and isinstance(row['instruct'], dict):
+                df_out.loc[index, 'instruct_total'] = row['instruct'].get('total', 0)
 
-                # Xử lý datetime
-                if 'datetime' not in df.columns:
-                    if all(col in df.columns for col in ['year', 'month', 'date']):
-                        df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
-                    elif all(col in df.columns for col in ['Year', 'Month', 'Date']):
-                        df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
+        # Xử lý datetime
+        if 'datetime' not in df_out.columns:
+            if all(col in df_out.columns for col in ['year', 'month', 'date']):
+                df_out['datetime'] = pd.to_datetime(df_out[['year', 'month', 'date']].rename(columns={'date': 'day'}))
+            elif all(col in df_out.columns for col in ['Year', 'Month', 'Date']):
+                df_out['datetime'] = pd.to_datetime(df_out[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
 
-                # Thêm các cột cần thiết
-                df['weekday'] = df['datetime'].dt.day_name()
-                df['weekday_vi'] = df['weekday'].map({
-                    'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
-                    'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
-                })
-                df['year'] = df['datetime'].dt.year
-                df['month'] = df['datetime'].dt.month
-                df['week'] = df['datetime'].dt.isocalendar().week
+        # Thêm các cột cần thiết
+        df_out['weekday'] = df_out['datetime'].dt.day_name()
+        df_out['weekday_vi'] = df_out['weekday'].map({
+            'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
+            'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
+        })
+        df_out['year'] = df_out['datetime'].dt.year
+        df_out['month'] = df_out['datetime'].dt.month
+        df_out['week'] = df_out['datetime'].dt.isocalendar().week
 
-                # Tính total_outgoing (tổng các loại văn bản bao gồm cả documents)
-                total_columns = ['documents', 'contracts_total', 'decisions_total', 'regulations_total',
-                               'rules_total', 'procedures_total', 'instruct_total']
-                for col in total_columns:
-                    if col not in df.columns:
-                        df[col] = 0
+        # Tính total_outgoing (tổng các loại văn bản bao gồm cả documents)
+        total_columns = ['documents', 'contracts_total', 'decisions_total', 'regulations_total',
+                       'rules_total', 'procedures_total', 'instruct_total']
+        for col in total_columns:
+            if col not in df_out.columns:
+                df_out[col] = 0
 
-                df['total_outgoing'] = df[total_columns].sum(axis=1)
-
-                return df
-        except Exception as e:
-            st.error(f"Lỗi khi load dữ liệu từ vbdi.json: {e}")
-            return None
-
-    df_out = load_outgoing_docs_data()
+        df_out['total_outgoing'] = df_out[total_columns].sum(axis=1)
 
     if df_out is not None:
             # Áp dụng filter toàn cục
@@ -2908,101 +3217,95 @@ with tab3:
     else:
         st.error("❌ Không có dữ liệu từ vbdi.json")
 
-# Tab 4: Quản lý công việc
-with tab4:
+# Tab 9: Quản lý công việc
+with tab9:
     st.markdown('<div class="tab-header">📋 Quản lý Công Việc</div>', unsafe_allow_html=True)
     
-    # Load dữ liệu từ file có sẵn
-    def load_task_data():
-        """Load dữ liệu công việc từ file cviec.json"""
-        try:
-            with open('cviec.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['data'] if isinstance(data, dict) and 'data' in data else data)
+    # Load dữ liệu từ GitHub
+    df = load_data_from_github('congviec.json')
 
-                # Flatten nested structure từ all_departments
-                for index, row in df.iterrows():
-                    if 'all_departments' in row and isinstance(row['all_departments'], dict):
-                        all_dept = row['all_departments']
-                        df.loc[index, 'tasks_assigned'] = all_dept.get('tasks_assigned', 0)
-                        df.loc[index, 'tasks_completed_on_time'] = all_dept.get('tasks_completed_on_time', 0)
-                        df.loc[index, 'tasks_completed_on_time_rate'] = all_dept.get('tasks_completed_on_time_rate', 0)
-                        df.loc[index, 'tasks_new'] = all_dept.get('tasks_new', 0)
-                        df.loc[index, 'tasks_new_rate'] = all_dept.get('tasks_new_rate', 0)
-                        df.loc[index, 'tasks_processing'] = all_dept.get('tasks_processing', 0)
-                        df.loc[index, 'tasks_processing_rate'] = all_dept.get('tasks_processing_rate', 0)
+    if df is not None:
+        # Flatten nested structure từ all_departments
+        for index, row in df.iterrows():
+            if 'all_departments' in row and isinstance(row['all_departments'], dict):
+                all_dept = row['all_departments']
+                df.loc[index, 'tasks_assigned'] = all_dept.get('tasks_assigned', 0)
+                df.loc[index, 'tasks_completed_on_time'] = all_dept.get('tasks_completed_on_time', 0)
+                df.loc[index, 'tasks_completed_on_time_rate'] = all_dept.get('tasks_completed_on_time_rate', 0)
+                df.loc[index, 'tasks_new'] = all_dept.get('tasks_new', 0)
+                df.loc[index, 'tasks_new_rate'] = all_dept.get('tasks_new_rate', 0)
+                df.loc[index, 'tasks_processing'] = all_dept.get('tasks_processing', 0)
+                df.loc[index, 'tasks_processing_rate'] = all_dept.get('tasks_processing_rate', 0)
 
-                # Xử lý datetime
-                if 'datetime' not in df.columns:
-                    if all(col in df.columns for col in ['year', 'month', 'date']):
-                        df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
-                    elif all(col in df.columns for col in ['Year', 'Month', 'Date']):
-                        df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
+        # Xử lý datetime
+        if 'datetime' not in df.columns:
+            if all(col in df.columns for col in ['year', 'month', 'date']):
+                df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
+            elif all(col in df.columns for col in ['Year', 'Month', 'Date']):
+                df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
 
-                # Thêm các cột cần thiết
-                df['weekday'] = df['datetime'].dt.day_name()
-                df['weekday_vi'] = df['weekday'].map({
-                    'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
-                    'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
-                })
-                df['year'] = df['datetime'].dt.year
-                df['month'] = df['datetime'].dt.month
-                df['week'] = df['datetime'].dt.isocalendar().week
+        # Thêm các cột cần thiết
+        df['weekday'] = df['datetime'].dt.day_name()
+        df['weekday_vi'] = df['weekday'].map({
+            'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
+            'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
+        })
+        df['year'] = df['datetime'].dt.year
+        df['month'] = df['datetime'].dt.month
+        df['week'] = df['datetime'].dt.isocalendar().week
 
-                # Đảm bảo các cột task tồn tại với giá trị mặc định
-                task_columns = ['tasks_assigned', 'tasks_completed_on_time', 'tasks_completed_on_time_rate',
-                               'tasks_new', 'tasks_new_rate', 'tasks_processing', 'tasks_processing_rate']
-                for col in task_columns:
-                    if col not in df.columns:
-                        df[col] = 0
+        # Đảm bảo các cột task tồn tại với giá trị mặc định
+        task_columns = ['tasks_assigned', 'tasks_completed_on_time', 'tasks_completed_on_time_rate',
+                       'tasks_new', 'tasks_new_rate', 'tasks_processing', 'tasks_processing_rate']
+        for col in task_columns:
+            if col not in df.columns:
+                df[col] = 0
 
-                # Tính completion_rate cho mỗi hàng
-                df['completion_rate'] = df.apply(lambda row:
-                    (row['tasks_completed_on_time'] / row['tasks_assigned'] * 100)
-                    if row['tasks_assigned'] > 0 else 0, axis=1)
+        # Tính completion_rate cho mỗi hàng
+        df['completion_rate'] = df.apply(lambda row:
+            (row['tasks_completed_on_time'] / row['tasks_assigned'] * 100)
+            if row['tasks_assigned'] > 0 else 0, axis=1)
 
-                # Tạo DataFrame riêng cho detail_departments
-                detail_rows = []
-                for index, row in df.iterrows():
-                    if 'detail_departments' in row and isinstance(row['detail_departments'], list):
-                        for dept in row['detail_departments']:
-                            if isinstance(dept, dict):
-                                detail_row = {
-                                    'Date': row.get('Date', row.get('date', '')),
-                                    'Month': row.get('Month', row.get('month', '')),
-                                    'Year': row.get('Year', row.get('year', '')),
-                                    'datetime': row.get('datetime', ''),
-                                    'weekday': row.get('weekday', ''),
-                                    'weekday_vi': row.get('weekday_vi', ''),
-                                    'year': row.get('year', ''),
-                                    'month': row.get('month', ''),
-                                    'week': row.get('week', ''),
-                                    'department': dept.get('Name', ''),
-                                    'tasks_assigned': dept.get('tasks_assigned', 0),
-                                    'tasks_completed_on_time': dept.get('tasks_completed_on_time', 0),
-                                    'tasks_completed_on_time_rate': dept.get('tasks_completed_on_time_rate', 0),
-                                    'tasks_new': dept.get('tasks_new', 0),
-                                    'tasks_new_rate': dept.get('tasks_new_rate', 0),
-                                    'tasks_processing': dept.get('tasks_processing', 0),
-                                    'tasks_processing_rate': dept.get('tasks_processing_rate', 0)
-                                }
-                                detail_rows.append(detail_row)
+        # Tạo DataFrame riêng cho detail_departments
+        detail_rows = []
+        for index, row in df.iterrows():
+            if 'detail_departments' in row and isinstance(row['detail_departments'], list):
+                for dept in row['detail_departments']:
+                    if isinstance(dept, dict):
+                        detail_row = {
+                            'Date': row.get('Date', row.get('date', '')),
+                            'Month': row.get('Month', row.get('month', '')),
+                            'Year': row.get('Year', row.get('year', '')),
+                            'datetime': row.get('datetime', ''),
+                            'weekday': row.get('weekday', ''),
+                            'weekday_vi': row.get('weekday_vi', ''),
+                            'year': row.get('year', ''),
+                            'month': row.get('month', ''),
+                            'week': row.get('week', ''),
+                            'department': dept.get('Name', ''),
+                            'tasks_assigned': dept.get('tasks_assigned', 0),
+                            'tasks_completed_on_time': dept.get('tasks_completed_on_time', 0),
+                            'tasks_completed_on_time_rate': dept.get('tasks_completed_on_time_rate', 0),
+                            'tasks_new': dept.get('tasks_new', 0),
+                            'tasks_new_rate': dept.get('tasks_new_rate', 0),
+                            'tasks_processing': dept.get('tasks_processing', 0),
+                            'tasks_processing_rate': dept.get('tasks_processing_rate', 0)
+                        }
+                        detail_rows.append(detail_row)
 
-                if detail_rows:
-                    df_detail = pd.DataFrame(detail_rows)
-                    # Tính completion_rate cho detail
-                    df_detail['completion_rate'] = df_detail.apply(lambda row:
-                        (row['tasks_completed_on_time'] / row['tasks_assigned'] * 100)
-                        if row['tasks_assigned'] > 0 else 0, axis=1)
-                else:
-                    df_detail = pd.DataFrame()
-
-                return df, df_detail
-        except Exception as e:
-            st.error(f"Lỗi khi load dữ liệu từ cviec.json: {e}")
-            return None, None
-
-    df_all_tasks, df_detail_tasks = load_task_data()
+        # Return both dataframes
+        df_all_tasks = df
+        if detail_rows:
+            df_detail_tasks = pd.DataFrame(detail_rows)
+            # Tính completion_rate cho detail
+            df_detail_tasks['completion_rate'] = df_detail_tasks.apply(lambda row:
+                (row['tasks_completed_on_time'] / row['tasks_assigned'] * 100)
+                if row['tasks_assigned'] > 0 else 0, axis=1)
+        else:
+            df_detail_tasks = pd.DataFrame()
+    else:
+        df_all_tasks = None
+        df_detail_tasks = None
 
     if df_all_tasks is not None and df_detail_tasks is not None:
             # Áp dụng filter toàn cục
@@ -3120,61 +3423,50 @@ with tab4:
     else:
         st.info("📁 Vui lòng upload file dữ liệu để xem thống kê chi tiết")
 
-# Tab 5: Quản lý lịch họp
-with tab5:
+# Tab 10: Quản lý lịch họp
+with tab10:
     st.markdown('<div class="tab-header">📅 Quản lý Lịch Họp</div>', unsafe_allow_html=True)
     
-    # Load dữ liệu từ file có sẵn
-    def load_meeting_data():
-        """Load dữ liệu lịch họp từ file lhop.json"""
-        try:
-            with open('lhop.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['data'] if isinstance(data, dict) and 'data' in data else data)
+    # Load dữ liệu từ GitHub
+    df_meetings = load_data_from_github('lichhop.json')
 
-                # Xử lý dữ liệu tương tự như process_meeting_data
-                if 'datetime' not in df.columns:
-                    if all(col in df.columns for col in ['year', 'month', 'date']):
-                        df['datetime'] = pd.to_datetime(df[['year', 'month', 'date']].rename(columns={'date': 'day'}))
-                    elif all(col in df.columns for col in ['Year', 'Month', 'Date']):
-                        df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
+    if df_meetings is not None:
+        # Xử lý dữ liệu
+        if 'datetime' not in df_meetings.columns:
+            if all(col in df_meetings.columns for col in ['year', 'month', 'date']):
+                df_meetings['datetime'] = pd.to_datetime(df_meetings[['year', 'month', 'date']].rename(columns={'date': 'day'}))
+            elif all(col in df_meetings.columns for col in ['Year', 'Month', 'Date']):
+                df_meetings['datetime'] = pd.to_datetime(df_meetings[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
 
-                # Thêm các cột cần thiết
-                df['weekday'] = df['datetime'].dt.day_name()
-                df['weekday_vi'] = df['weekday'].map({
-                    'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
-                    'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
-                })
-                df['year'] = df['datetime'].dt.year
-                df['month'] = df['datetime'].dt.month
-                df['week'] = df['datetime'].dt.isocalendar().week
+        # Thêm các cột cần thiết
+        df_meetings['weekday'] = df_meetings['datetime'].dt.day_name()
+        df_meetings['weekday_vi'] = df_meetings['weekday'].map({
+            'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
+            'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
+        })
+        df_meetings['year'] = df_meetings['datetime'].dt.year
+        df_meetings['month'] = df_meetings['datetime'].dt.month
+        df_meetings['week'] = df_meetings['datetime'].dt.isocalendar().week
 
-                # Thêm cột day_type dựa trên weekday
-                df['day_type'] = df['weekday'].map({
-                    'Monday': 'Ngày làm việc', 'Tuesday': 'Ngày làm việc', 'Wednesday': 'Ngày làm việc',
-                    'Thursday': 'Ngày làm việc', 'Friday': 'Ngày làm việc',
-                    'Saturday': 'Cuối tuần', 'Sunday': 'Cuối tuần'
-                })
+        # Thêm cột day_type dựa trên weekday
+        df_meetings['day_type'] = df_meetings['weekday'].map({
+            'Monday': 'Ngày làm việc', 'Tuesday': 'Ngày làm việc', 'Wednesday': 'Ngày làm việc',
+            'Thursday': 'Ngày làm việc', 'Friday': 'Ngày làm việc',
+            'Saturday': 'Cuối tuần', 'Sunday': 'Cuối tuần'
+        })
 
-                # Đảm bảo cột meeting_schedules tồn tại
-                if 'meeting_schedules' not in df.columns:
-                    df['meeting_schedules'] = 0
+        # Đảm bảo cột meeting_schedules tồn tại
+        if 'meeting_schedules' not in df_meetings.columns:
+            df_meetings['meeting_schedules'] = 0
 
-                # Thêm cột meeting_level dựa trên số lượng meeting_schedules (thống nhất với logic chart)
-                df['meeting_level'] = df['meeting_schedules'].apply(lambda x:
-                    'Rất ít' if x <= 2 else
-                    'Ít' if x <= 5 else
-                    'Trung bình' if x <= 10 else
-                    'Nhiều' if x <= 20 else
-                    'Rất nhiều'
-                )
-
-                return df
-        except Exception as e:
-            st.error(f"Lỗi khi load dữ liệu từ lhop.json: {e}")
-            return None
-
-    df_meetings = load_meeting_data()
+        # Thêm cột meeting_level dựa trên số lượng meeting_schedules
+        df_meetings['meeting_level'] = df_meetings['meeting_schedules'].apply(lambda x:
+            'Rất ít' if x <= 2 else
+            'Ít' if x <= 5 else
+            'Trung bình' if x <= 10 else
+            'Nhiều' if x <= 20 else
+            'Rất nhiều'
+        )
 
     if df_meetings is not None:
             # Áp dụng filter toàn cục
@@ -3311,44 +3603,34 @@ with tab5:
         st.error("❌ Không có dữ liệu lịch họp")
         st.info("📁 Upload dữ liệu để quản lý lịch họp chi tiết")
 
-# Tab 6: Quản lý phòng họp
-with tab6:
+# Tab 11: Quản lý phòng họp
+with tab11:
     st.markdown('<div class="tab-header">🏢 Quản lý Phòng Họp</div>', unsafe_allow_html=True)
     
-    def load_room_data_from_file():
-        """Load dữ liệu phòng họp từ file có sẵn"""
-        try:
-            with open('phop.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                df = pd.DataFrame(data['data'])
-                
-                # Tạo cột datetime
-                df['datetime'] = pd.to_datetime(df[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
-                df['weekday'] = df['datetime'].dt.day_name()
-                df['weekday_vi'] = df['weekday'].map({
-                    'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
-                    'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
-                })
-                df['month_vi'] = df['Month'].map({
-                    1: 'Tháng 1', 2: 'Tháng 2', 3: 'Tháng 3', 4: 'Tháng 4',
-                    5: 'Tháng 5', 6: 'Tháng 6', 7: 'Tháng 7', 8: 'Tháng 8',
-                    9: 'Tháng 9', 10: 'Tháng 10', 11: 'Tháng 11', 12: 'Tháng 12'
-                })
-                
-                # Tính toán các chỉ số
-                df['cancel_rate'] = (df['register_room_cancel'] / df['register_room'] * 100).fillna(0).round(1)
-                df['net_bookings'] = df['register_room'] - df['register_room_cancel']
-                df['is_weekend'] = df['weekday'].isin(['Saturday', 'Sunday'])
-                df['day_type'] = df['is_weekend'].map({False: 'Ngày làm việc', True: 'Cuối tuần'})
-                
-                return df
-        except Exception as e:
-            st.error(f"Lỗi khi load dữ liệu: {e}")
-            return None
-    
-    # Load dữ liệu từ file có sẵn
-    df_rooms = load_room_data_from_file()
+    # Load dữ liệu từ GitHub
+    df_rooms = load_data_from_github('phonghop.json')
+
     if df_rooms is not None:
+        # Tạo cột datetime
+        df_rooms['datetime'] = pd.to_datetime(df_rooms[['Year', 'Month', 'Date']].rename(columns={'Date': 'day'}))
+        df_rooms['weekday'] = df_rooms['datetime'].dt.day_name()
+        df_rooms['weekday_vi'] = df_rooms['weekday'].map({
+            'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4',
+            'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'Chủ nhật'
+        })
+        df_rooms['month_vi'] = df_rooms['Month'].map({
+            1: 'Tháng 1', 2: 'Tháng 2', 3: 'Tháng 3', 4: 'Tháng 4',
+            5: 'Tháng 5', 6: 'Tháng 6', 7: 'Tháng 7', 8: 'Tháng 8',
+            9: 'Tháng 9', 10: 'Tháng 10', 11: 'Tháng 11', 12: 'Tháng 12'
+        })
+
+        # Tính toán các chỉ số
+        df_rooms['cancel_rate'] = (df_rooms['register_room_cancel'] / df_rooms['register_room'] * 100).fillna(0).round(1)
+        df_rooms['net_bookings'] = df_rooms['register_room'] - df_rooms['register_room_cancel']
+        df_rooms['is_weekend'] = df_rooms['weekday'].isin(['Saturday', 'Sunday'])
+        df_rooms['day_type'] = df_rooms['is_weekend'].map({False: 'Ngày làm việc', True: 'Cuối tuần'})
+
+        # Áp dụng filter toàn cục
         df_rooms = apply_global_filter(df_rooms)
     
     if df_rooms is not None and not df_rooms.empty:
@@ -3418,6 +3700,3014 @@ with tab6:
     else:
         st.error("❌ Không có dữ liệu phòng họp")
         st.info("📁 Upload dữ liệu hoặc đảm bảo file meeting_rooms_data.json tồn tại để xem chi tiết")
+
+# Hàm tạo pivot table cho Tổ xe
+def create_vehicle_pivot_table(df):
+    st.markdown("### 📊 Bảng Pivot - Phân tích Tổ xe theo thời gian")
+
+    # CSS cho table lớn hơn và đẹp hơn
+    st.markdown("""
+    <style>
+    .pivot-table-vehicle {
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+    .pivot-table-vehicle td {
+        padding: 12px 8px !important;
+        text-align: center !important;
+    }
+    .pivot-table-vehicle th {
+        padding: 15px 8px !important;
+        text-align: center !important;
+        background-color: #f0f2f6 !important;
+        font-weight: bold !important;
+        font-size: 17px !important;
+    }
+    .increase { color: #16a085; font-weight: 600; }
+    .decrease { color: #e74c3c; font-weight: 600; }
+    .neutral { color: #7f8c8d; font-weight: 600; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        period_type = st.selectbox(
+            "📅 Tổng hợp theo:",
+            options=['Tuần', 'Tháng', 'Năm'],  # Thêm Năm cho dữ liệu 2025
+            index=0,  # Mặc định là Tuần
+            key="vehicle_period_type"
+        )
+
+    # Dữ liệu Tổ xe có cấu trúc khác - có thể có cột tuần/tháng trực tiếp
+    has_time_data = False
+    df_period = df.copy()
+
+    # Kiểm tra các cột thời gian - data có Tuần và Tháng
+    if 'Tuần' in df.columns or 'Tháng' in df.columns:
+        has_time_data = True
+
+        # Chuẩn bị dữ liệu dựa trên period_type được chọn
+        if period_type == 'Tuần' and 'Tuần' in df.columns:
+            df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+        elif period_type == 'Tháng' and 'Tháng' in df.columns:
+            df_period['period'] = 'T' + df_period['Tháng'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tháng'], errors='coerce')
+        elif period_type == 'Năm':
+            # Dữ liệu năm 2025 - tạo period năm
+            df_period['period'] = '2025'
+            df_period['period_sort'] = 2025
+        else:
+            # Fallback: sử dụng Tuần làm mặc định
+            if 'Tuần' in df.columns:
+                df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+                df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+            else:
+                has_time_data = False
+
+    elif 'datetime' in df.columns:
+        # Xử lý datetime nếu có
+        has_time_data = True
+        df_period['datetime'] = pd.to_datetime(df_period['datetime'])
+        df_period['year'] = df_period['datetime'].dt.year
+        df_period['month'] = df_period['datetime'].dt.month
+        df_period['week'] = df_period['datetime'].dt.isocalendar().week
+
+        if period_type == 'Tuần':
+            df_period['period'] = 'W' + df_period['week'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['week']
+        elif period_type == 'Tháng':
+            df_period['period'] = 'T' + df_period['month'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['month']
+    else:
+        # Không có dữ liệu thời gian, tạo period giả lập
+        has_time_data = False
+
+    if has_time_data:
+        # Tạo pivot table với các chỉ số Tổ xe - mở rộng để bao gồm tất cả metrics
+        vehicle_metrics = ['so_chuyen', 'km_chay', 'doanh_thu', 'nhien_lieu', 'bao_duong', 'hai_long', 'km_hanh_chinh', 'km_cuu_thuong', 'phieu_khao_sat']
+
+        # Nếu dữ liệu không có các cột metric, tạo chúng từ Nội dung/Số liệu
+        if 'Nội dung' in df_period.columns and 'Số liệu' in df_period.columns:
+            for metric in vehicle_metrics:
+                df_period[metric] = 0
+
+            # Mapping các metric từ Nội dung - dựa trên data thực tế
+            metric_mapping = {
+                'so_chuyen': ['Số chuyến xe'],
+                'km_chay': ['Tổng km chạy'],
+                'doanh_thu': ['Doanh thu Tổ xe'],
+                'nhien_lieu': ['Tổng số nhiên liệu tiêu thụ'],
+                'bao_duong': ['Chi phí bảo dưỡng'],
+                'hai_long': ['Tỷ lệ hài lòng của khách hàng'],
+                'km_hanh_chinh': ['Km chạy của Km chạy của xe hành chính', 'Km chạy của xe hành chính', 'Km chạy của hành chính'],
+                'km_cuu_thuong': ['Km chạy của Km chạy của xe cứu thương', 'Km chạy của xe cứu thương'],
+                'phieu_khao_sat': ['Số phiếu khảo sát hài lòng']
+            }
+
+            for metric, content_names in metric_mapping.items():
+                for content_name in content_names:
+                    mask = df_period['Nội dung'] == content_name
+                    df_period.loc[mask, metric] = pd.to_numeric(df_period.loc[mask, 'Số liệu'], errors='coerce').fillna(0)
+
+        # Tạo pivot data
+        pivot_data = df_period.groupby(['period', 'period_sort'])[vehicle_metrics].sum().reset_index()
+        pivot_data = pivot_data.sort_values('period_sort', ascending=False)
+
+        # Tính toán biến động so với kỳ trước
+        for col in vehicle_metrics:
+            pivot_data[f'{col}_prev'] = pivot_data[col].shift(-1)
+            pivot_data[f'{col}_change'] = pivot_data[col] - pivot_data[f'{col}_prev']
+            pivot_data[f'{col}_change_pct'] = ((pivot_data[col] / pivot_data[f'{col}_prev'] - 1) * 100).round(1)
+            pivot_data[f'{col}_change_pct'] = pivot_data[f'{col}_change_pct'].fillna(0)
+
+        # Tạo DataFrame hiển thị với biến động trong cùng cell
+        display_data = pivot_data.copy()
+
+        # Hàm tạo cell kết hợp giá trị và biến động với comma formatting
+        def format_cell_with_change(row, col):
+            current_val = row[col]
+            change_val = row[f'{col}_change']
+            change_pct = row[f'{col}_change_pct']
+            prev_val = row[f'{col}_prev']
+
+            # Nếu không có dữ liệu kỳ trước, chỉ hiển thị giá trị hiện tại với comma
+            if pd.isna(prev_val) or prev_val == 0:
+                return f"{int(current_val):,}"
+
+            # Định màu sắc theo chiều hướng thay đổi
+            if change_val > 0:
+                color_class = "increase"
+                arrow = "↗"
+                sign = "+"
+            elif change_val < 0:
+                color_class = "decrease"
+                arrow = "↘"
+                sign = ""
+            else:
+                color_class = "neutral"
+                arrow = "→"
+                sign = ""
+
+            # Trả về HTML với màu sắc và comma formatting
+            return f"""<div style="text-align: center; line-height: 1.2;">
+                <div style="font-size: 16px; font-weight: 600;">{int(current_val):,}</div>
+                <div class="{color_class}" style="font-size: 12px; margin-top: 2px;">
+                    {arrow} {sign}{int(change_val):,} ({change_pct:+.1f}%)
+                </div>
+            </div>"""
+
+        # Tạo cột hiển thị mới
+        display_columns = ['period']
+        column_names = {f'period': f'{period_type}'}
+
+        for col in vehicle_metrics:
+            new_col = f'{col}_display'
+            display_data[new_col] = display_data.apply(lambda row: format_cell_with_change(row, col), axis=1)
+            display_columns.append(new_col)
+
+            # Mapping tên cột cho hiển thị
+            metric_names = {
+                'so_chuyen': 'Số chuyến',
+                'km_chay': 'Tổng km',
+                'doanh_thu': 'Doanh thu (VNĐ)',
+                'nhien_lieu': 'Nhiên liệu (L)',
+                'bao_duong': 'Bảo dưỡng (VNĐ)',
+                'hai_long': 'Hài lòng (%)',
+                'km_hanh_chinh': 'Km hành chính',
+                'km_cuu_thuong': 'Km cứu thương',
+                'phieu_khao_sat': 'Phiếu khảo sát'
+            }
+            column_names[new_col] = metric_names.get(col, col)
+
+        st.markdown(f"#### 📋 Tổng hợp theo {period_type} (bao gồm biến động)")
+
+        # Hiển thị bảng với HTML để render màu sắc
+        df_display = display_data[display_columns].rename(columns=column_names)
+
+        # Tạo HTML table với sticky header
+        html_table = "<div style='max-height: 400px; overflow-y: auto; border: 1px solid #ddd;'><table class='pivot-table-vehicle' style='width: 100%; border-collapse: collapse; font-size: 16px;'>"
+
+        # Header với sticky positioning
+        html_table += "<thead><tr>"
+        for col in df_display.columns:
+            html_table += f"<th style='position: sticky; top: 0; padding: 15px 8px; text-align: center; background-color: #f0f2f6; font-weight: bold; font-size: 17px; border: 1px solid #ddd; z-index: 10;'>{col}</th>"
+        html_table += "</tr></thead>"
+
+        # Body
+        html_table += "<tbody>"
+        for _, row in df_display.iterrows():
+            html_table += "<tr>"
+            for i, col in enumerate(df_display.columns):
+                cell_value = row[col]
+                style = "padding: 12px 8px; text-align: center; border: 1px solid #ddd;"
+                html_table += f"<td style='{style}'>{cell_value}</td>"
+            html_table += "</tr>"
+        html_table += "</tbody></table></div>"
+
+        st.markdown(html_table, unsafe_allow_html=True)
+
+    else:
+        st.info("📊 Dữ liệu chưa có thông tin thời gian để tạo pivot table")
+        # Hiển thị dữ liệu cơ bản với comma formatting
+        if 'Nội dung' in df.columns and 'Số liệu' in df.columns:
+            summary_data = df[['Nội dung', 'Số liệu']].copy()
+            # Clean and format numbers with commas
+            def format_summary_number(x):
+                cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+                numeric_val = pd.to_numeric(cleaned, errors='coerce')
+                if pd.isna(numeric_val):
+                    return str(x)
+                elif numeric_val >= 1:
+                    return f"{numeric_val:,.0f}"
+                else:
+                    return f"{numeric_val:.1f}"
+
+            summary_data['Số liệu'] = summary_data['Số liệu'].apply(format_summary_number)
+            st.dataframe(summary_data, use_container_width=True, hide_index=True)
+
+    return period_type
+
+# Hàm tạo pivot table cho Tổng đài
+def create_call_pivot_table(df):
+    st.markdown("### 📊 Bảng Pivot - Phân tích Tổng đài theo thời gian")
+
+    # CSS cho table lớn hơn và đẹp hơn
+    st.markdown("""
+    <style>
+    .pivot-table-call {
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+    .pivot-table-call td {
+        padding: 12px 8px !important;
+        text-align: center !important;
+    }
+    .pivot-table-call th {
+        padding: 15px 8px !important;
+        text-align: center !important;
+        background-color: #f0f2f6 !important;
+        font-weight: bold !important;
+        font-size: 17px !important;
+    }
+    .increase { color: #16a085; font-weight: 600; }
+    .decrease { color: #e74c3c; font-weight: 600; }
+    .neutral { color: #7f8c8d; font-weight: 600; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        period_type = st.selectbox(
+            "📅 Tổng hợp theo:",
+            options=['Tuần', 'Tháng', 'Năm'],  # Thêm Năm cho dữ liệu 2025
+            index=0,  # Mặc định là Tuần
+            key="call_period_type"
+        )
+
+    # Dữ liệu Tổng đài có cấu trúc khác - có thể có cột tuần/tháng trực tiếp
+    has_time_data = False
+    df_period = df.copy()
+
+    # Kiểm tra các cột thời gian - data có Tuần và Tháng
+    if 'Tuần' in df.columns or 'Tháng' in df.columns:
+        has_time_data = True
+
+        # Chuẩn bị dữ liệu dựa trên period_type được chọn
+        if period_type == 'Tuần' and 'Tuần' in df.columns:
+            df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+        elif period_type == 'Tháng' and 'Tháng' in df.columns:
+            df_period['period'] = 'T' + df_period['Tháng'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tháng'], errors='coerce')
+        elif period_type == 'Năm':
+            # Dữ liệu năm 2025 - tạo period năm
+            df_period['period'] = '2025'
+            df_period['period_sort'] = 2025
+        else:
+            # Fallback: sử dụng Tuần làm mặc định
+            if 'Tuần' in df.columns:
+                df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+                df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+            else:
+                has_time_data = False
+
+    elif 'datetime' in df.columns:
+        # Xử lý datetime nếu có
+        has_time_data = True
+        df_period['datetime'] = pd.to_datetime(df_period['datetime'])
+        df_period['year'] = df_period['datetime'].dt.year
+        df_period['month'] = df_period['datetime'].dt.month
+        df_period['week'] = df_period['datetime'].dt.isocalendar().week
+
+        if period_type == 'Tuần':
+            df_period['period'] = 'W' + df_period['week'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['week']
+        elif period_type == 'Tháng':
+            df_period['period'] = 'T' + df_period['month'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['month']
+    else:
+        # Không có dữ liệu thời gian, tạo period giả lập
+        has_time_data = False
+
+    if has_time_data:
+        # Tạo pivot table với các chỉ số Tổng đài - mở rộng để bao gồm tất cả metrics
+        call_metrics = ['tong_goi', 'nho_tu_choi', 'nho_ko_bat', 'ty_le_tra_loi', 'hotline']
+
+        # Nếu dữ liệu không có các cột metric, tạo chúng từ Nội dung/Số liệu
+        if 'Nội dung' in df_period.columns and 'Số liệu' in df_period.columns:
+            for metric in call_metrics:
+                df_period[metric] = 0
+
+            # Mapping các metric từ Nội dung - dựa trên data thực tế
+            metric_mapping = {
+                'tong_goi': ['Tổng số cuộc gọi đến Bệnh viện'],
+                'nho_tu_choi': ['Tổng số cuộc gọi nhỡ do từ chối'],
+                'nho_ko_bat': ['Tổng số cuộc gọi nhỡ do không bắt máy'],
+                'ty_le_tra_loi': ['Tỷ lệ trả lời'],
+                'hotline': ['Hottline']
+            }
+
+            for metric, content_names in metric_mapping.items():
+                for content_name in content_names:
+                    mask = df_period['Nội dung'] == content_name
+                    df_period.loc[mask, metric] = pd.to_numeric(df_period.loc[mask, 'Số liệu'], errors='coerce').fillna(0)
+
+        # Tạo pivot data
+        pivot_data = df_period.groupby(['period', 'period_sort'])[call_metrics].sum().reset_index()
+        pivot_data = pivot_data.sort_values('period_sort', ascending=False)
+
+        # Tính toán biến động so với kỳ trước
+        for col in call_metrics:
+            pivot_data[f'{col}_prev'] = pivot_data[col].shift(-1)
+            pivot_data[f'{col}_change'] = pivot_data[col] - pivot_data[f'{col}_prev']
+            pivot_data[f'{col}_change_pct'] = ((pivot_data[col] / pivot_data[f'{col}_prev'] - 1) * 100).round(1)
+            pivot_data[f'{col}_change_pct'] = pivot_data[f'{col}_change_pct'].fillna(0)
+
+        # Tạo DataFrame hiển thị với biến động trong cùng cell
+        display_data = pivot_data.copy()
+
+        # Hàm tạo cell kết hợp giá trị và biến động với comma formatting
+        def format_cell_with_change(row, col):
+            current_val = row[col]
+            change_val = row[f'{col}_change']
+            change_pct = row[f'{col}_change_pct']
+            prev_val = row[f'{col}_prev']
+
+            # Nếu không có dữ liệu kỳ trước, chỉ hiển thị giá trị hiện tại với comma
+            if pd.isna(prev_val) or prev_val == 0:
+                if col == 'ty_le_tra_loi':
+                    return f"{current_val:.1f}%"
+                return f"{int(current_val):,}"
+
+            # Định màu sắc theo chiều hướng thay đổi
+            if change_val > 0:
+                color_class = "increase"
+                arrow = "↗"
+                sign = "+"
+            elif change_val < 0:
+                color_class = "decrease"
+                arrow = "↘"
+                sign = ""
+            else:
+                color_class = "neutral"
+                arrow = "→"
+                sign = ""
+
+            # Trả về HTML với màu sắc và comma formatting
+            if col == 'ty_le_tra_loi':
+                return f"""<div style="text-align: center; line-height: 1.2;">
+                    <div style="font-size: 16px; font-weight: 600;">{current_val:.1f}%</div>
+                    <div class="{color_class}" style="font-size: 12px; margin-top: 2px;">
+                        {arrow} {sign}{change_val:.1f} ({change_pct:+.1f}%)
+                    </div>
+                </div>"""
+            else:
+                return f"""<div style="text-align: center; line-height: 1.2;">
+                    <div style="font-size: 16px; font-weight: 600;">{int(current_val):,}</div>
+                    <div class="{color_class}" style="font-size: 12px; margin-top: 2px;">
+                        {arrow} {sign}{int(change_val):,} ({change_pct:+.1f}%)
+                    </div>
+                </div>"""
+
+        # Tạo cột hiển thị mới
+        display_columns = ['period']
+        column_names = {f'period': f'{period_type}'}
+
+        for col in call_metrics:
+            new_col = f'{col}_display'
+            display_data[new_col] = display_data.apply(lambda row: format_cell_with_change(row, col), axis=1)
+            display_columns.append(new_col)
+
+            # Mapping tên cột cho hiển thị
+            metric_names = {
+                'tong_goi': 'Tổng cuộc gọi',
+                'nho_tu_choi': 'Nhỡ (từ chối)',
+                'nho_ko_bat': 'Nhỡ (không bắt)',
+                'ty_le_tra_loi': 'Tỷ lệ trả lời (%)',
+                'hotline': 'Hotline'
+            }
+            column_names[new_col] = metric_names.get(col, col)
+
+        st.markdown(f"#### 📋 Tổng hợp theo {period_type} (bao gồm biến động)")
+
+        # Hiển thị bảng với HTML để render màu sắc
+        df_display = display_data[display_columns].rename(columns=column_names)
+
+        # Tạo HTML table với sticky header
+        html_table = "<div style='max-height: 400px; overflow-y: auto; border: 1px solid #ddd;'><table class='pivot-table-call' style='width: 100%; border-collapse: collapse; font-size: 16px;'>"
+
+        # Header với sticky positioning
+        html_table += "<thead><tr>"
+        for col in df_display.columns:
+            html_table += f"<th style='position: sticky; top: 0; padding: 15px 8px; text-align: center; background-color: #f0f2f6; font-weight: bold; font-size: 17px; border: 1px solid #ddd; z-index: 10;'>{col}</th>"
+        html_table += "</tr></thead>"
+
+        # Body
+        html_table += "<tbody>"
+        for _, row in df_display.iterrows():
+            html_table += "<tr>"
+            for i, col in enumerate(df_display.columns):
+                cell_value = row[col]
+                style = "padding: 12px 8px; text-align: center; border: 1px solid #ddd;"
+                html_table += f"<td style='{style}'>{cell_value}</td>"
+            html_table += "</tr>"
+        html_table += "</tbody></table></div>"
+
+        st.markdown(html_table, unsafe_allow_html=True)
+
+    else:
+        st.info("📊 Dữ liệu chưa có thông tin thời gian để tạo pivot table")
+        # Hiển thị dữ liệu cơ bản với comma formatting
+        if 'Nội dung' in df.columns and 'Số liệu' in df.columns:
+            summary_data = df[['Nội dung', 'Số liệu']].copy()
+            # Clean and format numbers with commas
+            def format_summary_number(x):
+                cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+                numeric_val = pd.to_numeric(cleaned, errors='coerce')
+                if pd.isna(numeric_val):
+                    return str(x)
+                elif numeric_val >= 1:
+                    return f"{numeric_val:,.0f}"
+                else:
+                    return f"{numeric_val:.1f}"
+
+            summary_data['Số liệu'] = summary_data['Số liệu'].apply(format_summary_number)
+            st.dataframe(summary_data, use_container_width=True, hide_index=True)
+
+    return period_type
+
+# Hàm tạo pivot table cho Hệ thống thư ký
+def create_secretary_pivot_table(df):
+    st.markdown("### 📊 Bảng Pivot - Phân tích Hệ thống thư ký theo thời gian")
+
+    # CSS cho table lớn hơn và đẹp hơn
+    st.markdown("""
+    <style>
+    .pivot-table-secretary {
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+    .pivot-table-secretary td {
+        padding: 12px 8px !important;
+        text-align: center !important;
+    }
+    .pivot-table-secretary th {
+        padding: 15px 8px !important;
+        text-align: center !important;
+        background-color: #f0f2f6 !important;
+        font-weight: bold !important;
+        font-size: 17px !important;
+    }
+    .increase { color: #16a085; font-weight: 600; }
+    .decrease { color: #e74c3c; font-weight: 600; }
+    .neutral { color: #7f8c8d; font-weight: 600; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        period_type = st.selectbox(
+            "📅 Tổng hợp theo:",
+            options=['Tuần', 'Tháng', 'Năm'],  # Thêm Năm cho dữ liệu 2025
+            index=0,  # Mặc định là Tuần
+            key="secretary_period_type"
+        )
+
+    # Dữ liệu Hệ thống thư ký có cấu trúc khác - có thể có cột tuần/tháng trực tiếp
+    has_time_data = False
+    df_period = df.copy()
+
+    # Kiểm tra các cột thời gian - data có Tuần và Tháng
+    if 'Tuần' in df.columns or 'Tháng' in df.columns:
+        has_time_data = True
+
+        # Chuẩn bị dữ liệu dựa trên period_type được chọn
+        if period_type == 'Tuần' and 'Tuần' in df.columns:
+            df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+        elif period_type == 'Tháng' and 'Tháng' in df.columns:
+            df_period['period'] = 'T' + df_period['Tháng'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tháng'], errors='coerce')
+        elif period_type == 'Năm':
+            # Dữ liệu năm 2025 - tạo period năm
+            df_period['period'] = '2025'
+            df_period['period_sort'] = 2025
+        else:
+            # Fallback: sử dụng Tuần làm mặc định
+            if 'Tuần' in df.columns:
+                df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+                df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+            else:
+                has_time_data = False
+
+    elif 'datetime' in df.columns:
+        # Xử lý datetime nếu có
+        has_time_data = True
+        df_period['datetime'] = pd.to_datetime(df_period['datetime'])
+        df_period['year'] = df_period['datetime'].dt.year
+        df_period['month'] = df_period['datetime'].dt.month
+        df_period['week'] = df_period['datetime'].dt.isocalendar().week
+
+        if period_type == 'Tuần':
+            df_period['period'] = 'W' + df_period['week'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['week']
+        elif period_type == 'Tháng':
+            df_period['period'] = 'T' + df_period['month'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['month']
+    else:
+        # Không có dữ liệu thời gian, tạo period giả lập
+        has_time_data = False
+
+    if has_time_data:
+        # Tạo pivot table với các chỉ số Hệ thống thư ký - mở rộng để bao gồm tất cả metrics
+        secretary_metrics = ['tong_tk', 'tuyen_moi', 'nghi_viec', 'hanh_chinh', 'chuyen_mon', 'dao_tao']
+
+        # Nếu dữ liệu không có các cột metric, tạo chúng từ Nội dung/Số liệu
+        if 'Nội dung' in df_period.columns and 'Số liệu' in df_period.columns:
+            for metric in secretary_metrics:
+                df_period[metric] = 0
+
+            # Mapping các metric từ Nội dung - dựa trên data thực tế
+            metric_mapping = {
+                'tong_tk': ['Tổng số thư ký'],
+                'tuyen_moi': ['Số thư ký được tuyển dụng'],
+                'nghi_viec': ['Số thư ký nghỉ việc'],
+                'hanh_chinh': ['- Thư ký hành chính'],
+                'chuyen_mon': ['- Thư ký chuyên môn'],
+                'dao_tao': ['Số buổi tập huấn, đào tạo cho thư ký']
+            }
+
+            for metric, content_names in metric_mapping.items():
+                for content_name in content_names:
+                    mask = df_period['Nội dung'] == content_name
+                    df_period.loc[mask, metric] = pd.to_numeric(df_period.loc[mask, 'Số liệu'], errors='coerce').fillna(0)
+
+        # Tạo pivot data
+        pivot_data = df_period.groupby(['period', 'period_sort'])[secretary_metrics].sum().reset_index()
+        pivot_data = pivot_data.sort_values('period_sort', ascending=False)
+
+        # Tính toán biến động so với kỳ trước
+        for col in secretary_metrics:
+            pivot_data[f'{col}_prev'] = pivot_data[col].shift(-1)
+            pivot_data[f'{col}_change'] = pivot_data[col] - pivot_data[f'{col}_prev']
+            pivot_data[f'{col}_change_pct'] = ((pivot_data[col] / pivot_data[f'{col}_prev'] - 1) * 100).round(1)
+            pivot_data[f'{col}_change_pct'] = pivot_data[f'{col}_change_pct'].fillna(0)
+
+        # Tạo DataFrame hiển thị với biến động trong cùng cell
+        display_data = pivot_data.copy()
+
+        # Hàm tạo cell kết hợp giá trị và biến động với comma formatting
+        def format_cell_with_change(row, col):
+            current_val = row[col]
+            change_val = row[f'{col}_change']
+            change_pct = row[f'{col}_change_pct']
+            prev_val = row[f'{col}_prev']
+
+            # Nếu không có dữ liệu kỳ trước, chỉ hiển thị giá trị hiện tại với comma
+            if pd.isna(prev_val) or prev_val == 0:
+                return f"{int(current_val):,}"
+
+            # Định màu sắc theo chiều hướng thay đổi
+            if change_val > 0:
+                color_class = "increase"
+                arrow = "↗"
+                sign = "+"
+            elif change_val < 0:
+                color_class = "decrease"
+                arrow = "↘"
+                sign = ""
+            else:
+                color_class = "neutral"
+                arrow = "→"
+                sign = ""
+
+            # Trả về HTML với màu sắc và comma formatting
+            return f"""<div style="text-align: center; line-height: 1.2;">
+                <div style="font-size: 16px; font-weight: 600;">{int(current_val):,}</div>
+                <div class="{color_class}" style="font-size: 12px; margin-top: 2px;">
+                    {arrow} {sign}{int(change_val):,} ({change_pct:+.1f}%)
+                </div>
+            </div>"""
+
+        # Tạo cột hiển thị mới
+        display_columns = ['period']
+        column_names = {f'period': f'{period_type}'}
+
+        for col in secretary_metrics:
+            new_col = f'{col}_display'
+            display_data[new_col] = display_data.apply(lambda row: format_cell_with_change(row, col), axis=1)
+            display_columns.append(new_col)
+
+            # Mapping tên cột cho hiển thị
+            metric_names = {
+                'tong_tk': 'Tổng thư ký',
+                'tuyen_moi': 'Tuyển mới',
+                'nghi_viec': 'Nghỉ việc',
+                'hanh_chinh': 'Hành chính',
+                'chuyen_mon': 'Chuyên môn',
+                'dao_tao': 'Đào tạo (buổi)'
+            }
+            column_names[new_col] = metric_names.get(col, col)
+
+        st.markdown(f"#### 📋 Tổng hợp theo {period_type} (bao gồm biến động)")
+
+        # Hiển thị bảng với HTML để render màu sắc
+        df_display = display_data[display_columns].rename(columns=column_names)
+
+        # Tạo HTML table với sticky header
+        html_table = "<div style='max-height: 400px; overflow-y: auto; border: 1px solid #ddd;'><table class='pivot-table-secretary' style='width: 100%; border-collapse: collapse; font-size: 16px;'>"
+
+        # Header với sticky positioning
+        html_table += "<thead><tr>"
+        for col in df_display.columns:
+            html_table += f"<th style='position: sticky; top: 0; padding: 15px 8px; text-align: center; background-color: #f0f2f6; font-weight: bold; font-size: 17px; border: 1px solid #ddd; z-index: 10;'>{col}</th>"
+        html_table += "</tr></thead>"
+
+        # Body
+        html_table += "<tbody>"
+        for _, row in df_display.iterrows():
+            html_table += "<tr>"
+            for i, col in enumerate(df_display.columns):
+                cell_value = row[col]
+                style = "padding: 12px 8px; text-align: center; border: 1px solid #ddd;"
+                html_table += f"<td style='{style}'>{cell_value}</td>"
+            html_table += "</tr>"
+        html_table += "</tbody></table></div>"
+
+        st.markdown(html_table, unsafe_allow_html=True)
+
+    else:
+        st.info("📊 Dữ liệu chưa có thông tin thời gian để tạo pivot table")
+        # Hiển thị dữ liệu cơ bản với comma formatting
+        if 'Nội dung' in df.columns and 'Số liệu' in df.columns:
+            summary_data = df[['Nội dung', 'Số liệu']].copy()
+            # Clean and format numbers with commas
+            def format_summary_number(x):
+                cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+                numeric_val = pd.to_numeric(cleaned, errors='coerce')
+                if pd.isna(numeric_val):
+                    return str(x)
+                elif numeric_val >= 1:
+                    return f"{numeric_val:,.0f}"
+                else:
+                    return f"{numeric_val:.1f}"
+
+            summary_data['Số liệu'] = summary_data['Số liệu'].apply(format_summary_number)
+            st.dataframe(summary_data, use_container_width=True, hide_index=True)
+
+    return period_type
+
+# Hàm tạo pivot table cho Bãi giữ xe
+def create_parking_pivot_table(df):
+    st.markdown("### 📊 Bảng Pivot - Phân tích Bãi giữ xe theo thời gian")
+
+    # CSS cho table lớn hơn và đẹp hơn
+    st.markdown("""
+    <style>
+    .pivot-table-parking {
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+    .pivot-table-parking td {
+        padding: 12px 8px !important;
+        text-align: center !important;
+    }
+    .pivot-table-parking th {
+        padding: 15px 8px !important;
+        text-align: center !important;
+        background-color: #f0f2f6 !important;
+        font-weight: bold !important;
+        font-size: 17px !important;
+    }
+    .increase { color: #16a085; font-weight: 600; }
+    .decrease { color: #e74c3c; font-weight: 600; }
+    .neutral { color: #7f8c8d; font-weight: 600; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        period_type = st.selectbox(
+            "📅 Tổng hợp theo:",
+            options=['Tuần', 'Tháng', 'Năm'],  # Thêm Năm cho dữ liệu 2025
+            index=0,  # Mặc định là Tuần
+            key="parking_period_type"
+        )
+
+    # Dữ liệu Bãi giữ xe có cấu trúc khác - có thể có cột tuần/tháng trực tiếp
+    has_time_data = False
+    df_period = df.copy()
+
+    # Kiểm tra các cột thời gian - data có Tuần và Tháng
+    if 'Tuần' in df.columns or 'Tháng' in df.columns:
+        has_time_data = True
+
+        # Chuẩn bị dữ liệu dựa trên period_type được chọn
+        if period_type == 'Tuần' and 'Tuần' in df.columns:
+            df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+        elif period_type == 'Tháng' and 'Tháng' in df.columns:
+            df_period['period'] = 'T' + df_period['Tháng'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tháng'], errors='coerce')
+        elif period_type == 'Năm':
+            # Dữ liệu năm 2025 - tạo period năm
+            df_period['period'] = '2025'
+            df_period['period_sort'] = 2025
+        else:
+            # Fallback: sử dụng Tuần làm mặc định
+            if 'Tuần' in df.columns:
+                df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+                df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+            else:
+                has_time_data = False
+
+    elif 'datetime' in df.columns:
+        # Xử lý datetime nếu có
+        has_time_data = True
+        df_period['datetime'] = pd.to_datetime(df_period['datetime'])
+        df_period['year'] = df_period['datetime'].dt.year
+        df_period['month'] = df_period['datetime'].dt.month
+        df_period['week'] = df_period['datetime'].dt.isocalendar().week
+
+        if period_type == 'Tuần':
+            df_period['period'] = 'W' + df_period['week'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['week']
+        elif period_type == 'Tháng':
+            df_period['period'] = 'T' + df_period['month'].astype(str) + '-' + df_period['year'].astype(str)
+            df_period['period_sort'] = df_period['year'] * 100 + df_period['month']
+    else:
+        # Không có dữ liệu thời gian, tạo period giả lập
+        has_time_data = False
+
+    if has_time_data:
+        # Tạo pivot table với các chỉ số Bãi giữ xe - mở rộng để bao gồm tất cả metrics
+        parking_metrics = ['ve_ngay', 've_thang', 'doanh_thu', 'cong_suat', 'ty_le_su_dung', 'khieu_nai']
+
+        # Nếu dữ liệu không có các cột metric, tạo chúng từ Nội dung/Số liệu
+        if 'Nội dung' in df_period.columns and 'Số liệu' in df_period.columns:
+            for metric in parking_metrics:
+                df_period[metric] = 0
+
+            # Mapping các metric từ Nội dung - dựa trên data thực tế
+            metric_mapping = {
+                've_ngay': ['Tổng số lượt vé ngày'],
+                've_thang': ['Tổng số lượt vé tháng'],
+                'doanh_thu': ['Doanh thu'],
+                'cong_suat': ['Công suất trung bình/ngày'],
+                'ty_le_su_dung': ['Tỷ lệ sử dụng'],
+                'khieu_nai': ['Số phản ánh khiếu nại']
+            }
+
+            for metric, content_names in metric_mapping.items():
+                for content_name in content_names:
+                    mask = df_period['Nội dung'] == content_name
+                    df_period.loc[mask, metric] = pd.to_numeric(df_period.loc[mask, 'Số liệu'], errors='coerce').fillna(0)
+
+        # Tạo pivot data
+        pivot_data = df_period.groupby(['period', 'period_sort'])[parking_metrics].sum().reset_index()
+        pivot_data = pivot_data.sort_values('period_sort', ascending=False)
+
+        # Tính toán biến động so với kỳ trước
+        for col in parking_metrics:
+            pivot_data[f'{col}_prev'] = pivot_data[col].shift(-1)
+            pivot_data[f'{col}_change'] = pivot_data[col] - pivot_data[f'{col}_prev']
+            pivot_data[f'{col}_change_pct'] = ((pivot_data[col] / pivot_data[f'{col}_prev'] - 1) * 100).round(1)
+            pivot_data[f'{col}_change_pct'] = pivot_data[f'{col}_change_pct'].fillna(0)
+
+        # Tạo DataFrame hiển thị với biến động trong cùng cell
+        display_data = pivot_data.copy()
+
+        # Hàm tạo cell kết hợp giá trị và biến động với comma formatting
+        def format_cell_with_change(row, col):
+            current_val = row[col]
+            change_val = row[f'{col}_change']
+            change_pct = row[f'{col}_change_pct']
+            prev_val = row[f'{col}_prev']
+
+            # Nếu không có dữ liệu kỳ trước, chỉ hiển thị giá trị hiện tại với comma
+            if pd.isna(prev_val) or prev_val == 0:
+                if col == 'ty_le_su_dung':
+                    return f"{current_val:.1f}%"
+                return f"{int(current_val):,}"
+
+            # Định màu sắc theo chiều hướng thay đổi
+            if change_val > 0:
+                color_class = "increase"
+                arrow = "↗"
+                sign = "+"
+            elif change_val < 0:
+                color_class = "decrease"
+                arrow = "↘"
+                sign = ""
+            else:
+                color_class = "neutral"
+                arrow = "→"
+                sign = ""
+
+            # Trả về HTML với màu sắc và comma formatting
+            if col == 'ty_le_su_dung':
+                return f"""<div style="text-align: center; line-height: 1.2;">
+                    <div style="font-size: 16px; font-weight: 600;">{current_val:.1f}%</div>
+                    <div class="{color_class}" style="font-size: 12px; margin-top: 2px;">
+                        {arrow} {sign}{change_val:.1f} ({change_pct:+.1f}%)
+                    </div>
+                </div>"""
+            else:
+                return f"""<div style="text-align: center; line-height: 1.2;">
+                    <div style="font-size: 16px; font-weight: 600;">{int(current_val):,}</div>
+                    <div class="{color_class}" style="font-size: 12px; margin-top: 2px;">
+                        {arrow} {sign}{int(change_val):,} ({change_pct:+.1f}%)
+                    </div>
+                </div>"""
+
+        # Tạo cột hiển thị mới
+        display_columns = ['period']
+        column_names = {f'period': f'{period_type}'}
+
+        for col in parking_metrics:
+            new_col = f'{col}_display'
+            display_data[new_col] = display_data.apply(lambda row: format_cell_with_change(row, col), axis=1)
+            display_columns.append(new_col)
+
+            # Mapping tên cột cho hiển thị
+            metric_names = {
+                've_ngay': 'Vé ngày',
+                've_thang': 'Vé tháng',
+                'doanh_thu': 'Doanh thu (VND)',
+                'cong_suat': 'Công suất',
+                'ty_le_su_dung': 'Tỷ lệ SD (%)',
+                'khieu_nai': 'Khiếu nại'
+            }
+            column_names[new_col] = metric_names.get(col, col)
+
+        st.markdown(f"#### 📋 Tổng hợp theo {period_type} (bao gồm biến động)")
+
+        # Hiển thị bảng với HTML để render màu sắc
+        df_display = display_data[display_columns].rename(columns=column_names)
+
+        # Tạo HTML table với sticky header
+        html_table = "<div style='max-height: 400px; overflow-y: auto; border: 1px solid #ddd;'><table class='pivot-table-parking' style='width: 100%; border-collapse: collapse; font-size: 16px;'>"
+
+        # Header với sticky positioning
+        html_table += "<thead><tr>"
+        for col in df_display.columns:
+            html_table += f"<th style='position: sticky; top: 0; padding: 15px 8px; text-align: center; background-color: #f0f2f6; font-weight: bold; font-size: 17px; border: 1px solid #ddd; z-index: 10;'>{col}</th>"
+        html_table += "</tr></thead>"
+
+        # Body
+        html_table += "<tbody>"
+        for _, row in df_display.iterrows():
+            html_table += "<tr>"
+            for i, col in enumerate(df_display.columns):
+                cell_value = row[col]
+                style = "padding: 12px 8px; text-align: center; border: 1px solid #ddd;"
+                html_table += f"<td style='{style}'>{cell_value}</td>"
+            html_table += "</tr>"
+        html_table += "</tbody></table></div>"
+
+        st.markdown(html_table, unsafe_allow_html=True)
+
+    else:
+        st.info("📊 Dữ liệu chưa có thông tin thời gian để tạo pivot table")
+        # Hiển thị dữ liệu cơ bản với comma formatting
+        if 'Nội dung' in df.columns and 'Số liệu' in df.columns:
+            summary_data = df[['Nội dung', 'Số liệu']].copy()
+            # Clean and format numbers with commas
+            def format_summary_number(x):
+                cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+                numeric_val = pd.to_numeric(cleaned, errors='coerce')
+                if pd.isna(numeric_val):
+                    return str(x)
+                elif numeric_val >= 1:
+                    return f"{numeric_val:,.0f}"
+                else:
+                    return f"{numeric_val:.1f}"
+
+            summary_data['Số liệu'] = summary_data['Số liệu'].apply(format_summary_number)
+            st.dataframe(summary_data, use_container_width=True, hide_index=True)
+
+    return period_type
+
+# Hàm tạo charts cho Tổ xe - giống như document tabs
+def create_vehicle_charts(df):
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Chart doanh thu theo tuần
+        revenue_data = df[df['Nội dung'] == 'Doanh thu Tổ xe']
+        if not revenue_data.empty and 'Tuần' in revenue_data.columns:
+            revenue_trend = revenue_data.copy()
+            revenue_trend['Tuần'] = pd.to_numeric(revenue_trend['Tuần'], errors='coerce')
+            revenue_trend['Doanh thu'] = pd.to_numeric(revenue_trend['Số liệu'].astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip(), errors='coerce')
+            revenue_trend = revenue_trend.dropna().sort_values('Tuần')
+
+            fig_revenue = go.Figure()
+            fig_revenue.add_trace(go.Scatter(
+                x=revenue_trend['Tuần'],
+                y=revenue_trend['Doanh thu'],
+                mode='lines+markers',
+                name='Doanh thu',
+                line=dict(color='#1f77b4', width=2),
+                marker=dict(size=8)
+            ))
+
+            # Đường xu hướng (nếu đủ dữ liệu)
+            if len(revenue_trend) >= 3:
+                ma_window = min(3, len(revenue_trend)//2)
+                ma_trend = revenue_trend['Doanh thu'].rolling(window=ma_window, center=True).mean()
+                fig_revenue.add_trace(go.Scatter(
+                    x=revenue_trend['Tuần'],
+                    y=ma_trend,
+                    mode='lines',
+                    name=f'Xu hướng ({ma_window} tuần)',
+                    line=dict(color='red', width=3, dash='dash'),
+                    opacity=0.8
+                ))
+
+            fig_revenue.update_layout(
+                title='💰 Doanh thu theo tuần (có xu hướng)',
+                xaxis_title='Tuần',
+                yaxis_title='Doanh thu (VNĐ)',
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig_revenue, use_container_width=True)
+
+    with col2:
+        # Chart km chạy theo tuần
+        km_data = df[df['Nội dung'] == 'Tổng km chạy']
+        if not km_data.empty and 'Tuần' in km_data.columns:
+            km_trend = km_data.copy()
+            km_trend['Tuần'] = pd.to_numeric(km_trend['Tuần'], errors='coerce')
+            km_trend['Km chạy'] = pd.to_numeric(km_trend['Số liệu'].astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip(), errors='coerce')
+            km_trend = km_trend.dropna().sort_values('Tuần')
+
+            fig_km = go.Figure()
+            fig_km.add_trace(go.Scatter(
+                x=km_trend['Tuần'],
+                y=km_trend['Km chạy'],
+                mode='lines+markers',
+                name='Km chạy',
+                line=dict(color='#1f77b4', width=2),
+                marker=dict(size=8)
+            ))
+
+            # Đường xu hướng
+            if len(km_trend) >= 3:
+                ma_window = min(3, len(km_trend)//2)
+                ma_trend = km_trend['Km chạy'].rolling(window=ma_window, center=True).mean()
+                fig_km.add_trace(go.Scatter(
+                    x=km_trend['Tuần'],
+                    y=ma_trend,
+                    mode='lines',
+                    name=f'Xu hướng ({ma_window} tuần)',
+                    line=dict(color='red', width=3, dash='dash'),
+                    opacity=0.8
+                ))
+
+            fig_km.update_layout(
+                title='🛣️ Km chạy theo tuần (có xu hướng)',
+                xaxis_title='Tuần',
+                yaxis_title='Km chạy',
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig_km, use_container_width=True)
+
+# Tab 4: Tổ xe
+with tab4:
+    st.markdown('<div class="tab-header">🚗 Báo cáo Tổ xe</div>', unsafe_allow_html=True)
+
+    def create_vehicle_data():
+        """Tạo dữ liệu mẫu cho tổ xe từ format đã cho"""
+        return pd.DataFrame({
+            'Tuần': [39, 39, 39, 39, 39, 39, 39, 39, 39],
+            'Tháng': [9, 9, 9, 9, 9, 9, 9, 9, 9],
+            'Nội dung': [
+                'Số chuyến xe',
+                'Tổng số nhiên liệu tiêu thụ',
+                'Tổng km chạy',
+                'Km chạy của hành chính',
+                'Km chạy của xe cứu thương',
+                'Chi phí bảo dưỡng',
+                'Doanh thu Tổ xe',
+                'Số phiếu khảo sát hài lòng',
+                'Tỷ lệ hài lòng của khách hàng'
+            ],
+            'Số liệu': [245, 1200, 8500, 5200, 3300, 15000000, 25000000, 180, 92.5]
+        })
+
+    # Load data từ DataManager hoặc dữ liệu mẫu
+    df_vehicle = data_manager.get_category_data('Tổ xe')
+
+    if df_vehicle is not None:
+        st.info(f"✅ Đã tải {len(df_vehicle)} bản ghi cho Tổ xe từ file: {data_manager.metadata['filename']}")
+    else:
+        st.info("📁 Chưa có dữ liệu được tải từ sidebar. Hiển thị dữ liệu mẫu.")
+        df_vehicle = create_vehicle_data()
+
+    if not df_vehicle.empty:
+        # Metrics overview tổng quan
+        st.markdown('<div class="section-header">📊 Tổng quan hoạt động Tổ xe</div>', unsafe_allow_html=True)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Debug: Hiển thị cấu trúc dữ liệu
+        with st.expander("🔍 Debug: Cấu trúc dữ liệu Tổ xe", expanded=False):
+            st.write("**Columns:**", list(df_vehicle.columns))
+            st.write("**Shape:**", df_vehicle.shape)
+            if 'Nội dung' in df_vehicle.columns:
+                st.write("**Nội dung values:**", df_vehicle['Nội dung'].unique().tolist())
+            st.dataframe(df_vehicle.head())
+
+        # Tính toán metrics từ dữ liệu - CỘNG TỔNG TẤT CẢ CÁC TUẦN
+        def get_metric_value(content_name):
+            if 'Nội dung' not in df_vehicle.columns or 'Số liệu' not in df_vehicle.columns:
+                return 0
+
+            # Lấy tất cả các hàng có nội dung này và cộng tổng
+            result = df_vehicle[df_vehicle['Nội dung'] == content_name]['Số liệu']
+            if len(result) > 0:
+                # Clean data: remove non-breaking spaces and other whitespace characters
+                cleaned_result = result.astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+                # Convert tất cả values thành numeric và cộng tổng
+                numeric_values = pd.to_numeric(cleaned_result, errors='coerce').fillna(0)
+                total = numeric_values.sum()
+                return total
+            return 0
+
+        so_chuyen = get_metric_value('Số chuyến xe')
+        km_chay = get_metric_value('Tổng km chạy')
+        doanh_thu = get_metric_value('Doanh thu Tổ xe')
+
+        with col1:
+            st.metric("🚗 Số chuyến", f"{int(so_chuyen):,}", help="Tổng số chuyến xe tất cả các tuần")
+        with col2:
+            st.metric("🛣️ Tổng km", f"{int(km_chay):,}", help="Tổng số kilomet đã chạy tất cả các tuần")
+        with col3:
+            st.metric("💰 Doanh thu", f"{int(doanh_thu):,}", help="Tổng doanh thu Tổ xe tất cả các tuần (VNĐ)")
+        with col4:
+            # Tính trung bình tỷ lệ hài lòng - CHỈ TÍNH NHỮNG TUẦN CÓ KHẢO SÁT
+            hai_long_data = df_vehicle[df_vehicle['Nội dung'] == 'Tỷ lệ hài lòng của khách hàng']['Số liệu']
+            if len(hai_long_data) > 0:
+                # Clean data: remove non-breaking spaces and other whitespace characters
+                cleaned_hai_long = hai_long_data.astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+                hai_long_numeric = pd.to_numeric(cleaned_hai_long, errors='coerce')
+                # Chỉ tính những tuần có tỷ lệ hài lòng > 0 (có làm khảo sát)
+                hai_long_valid = hai_long_numeric[hai_long_numeric > 0]
+                hai_long_avg = hai_long_valid.mean() if len(hai_long_valid) > 0 else 0
+            else:
+                hai_long_avg = 0
+            st.metric("😊 Hài lòng", f"{hai_long_avg:.1f}%", help="Tỷ lệ hài lòng trung bình (chỉ tính tuần có khảo sát)")
+
+        # Thêm hàng metrics thứ 2
+        col5, col6, col7, col8 = st.columns(4)
+
+        nhien_lieu = get_metric_value('Tổng số nhiên liệu tiêu thụ')
+        # Xử lý typo trong dữ liệu thực: "Km chạy của Km chạy của xe hành chính"
+        km_hanh_chinh = get_metric_value('Km chạy của Km chạy của xe hành chính') or get_metric_value('Km chạy của hành chính')
+        km_cuu_thuong = get_metric_value('Km chạy của Km chạy của xe cứu thương') or get_metric_value('Km chạy của xe cứu thương')
+        bao_duong = get_metric_value('Chi phí bảo dưỡng')
+
+        with col5:
+            st.metric("⛽ Nhiên liệu", f"{int(nhien_lieu):,}", help="Tổng nhiên liệu tiêu thụ tất cả các tuần (lít)")
+        with col6:
+            st.metric("🏢 Hành chính", f"{int(km_hanh_chinh):,} km", help="Tổng km chạy hành chính tất cả các tuần")
+        with col7:
+            st.metric("🚑 Cứu thương", f"{int(km_cuu_thuong):,} km", help="Tổng km chạy xe cứu thương tất cả các tuần")
+        with col8:
+            st.metric("🔧 Bảo dưỡng", f"{int(bao_duong):,}", help="Tổng chi phí bảo dưỡng tất cả các tuần (VNĐ)")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Pivot Table Section - giống như document tabs
+        create_vehicle_pivot_table(df_vehicle)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Biểu đồ tổng quan
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích</div>', unsafe_allow_html=True)
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            # Biểu đồ phân bố km chạy (xử lý typo)
+            km_patterns = ['Km chạy của Km chạy của xe hành chính', 'Km chạy của Km chạy của xe cứu thương',
+                          'Km chạy của hành chính', 'Km chạy của xe cứu thương']
+            km_data = df_vehicle[df_vehicle['Nội dung'].isin(km_patterns)]
+
+            if not km_data.empty:
+                # Làm sạch tên hiển thị
+                km_data_clean = km_data.copy()
+                km_data_clean['Nội dung'] = km_data_clean['Nội dung'].str.replace('Km chạy của Km chạy của xe ', '').str.replace('Km chạy của ', '')
+
+                fig_km = px.pie(km_data_clean, values='Số liệu', names='Nội dung',
+                              title='🛣️ Phân bố Km chạy theo loại xe',
+                              hole=0.4)
+                fig_km.update_layout(height=400)
+                st.plotly_chart(fig_km, use_container_width=True)
+
+        with col_chart2:
+            # Biểu đồ doanh thu vs chi phí
+            finance_data = df_vehicle[df_vehicle['Nội dung'].isin(['Doanh thu Tổ xe', 'Chi phí bảo dưỡng'])]
+            if not finance_data.empty:
+                fig_finance = px.bar(finance_data, x='Nội dung', y='Số liệu',
+                                   title='💰 So sánh Doanh thu - Chi phí',
+                                   color='Nội dung')
+                fig_finance.update_layout(height=400)
+                st.plotly_chart(fig_finance, use_container_width=True)
+
+        # Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Biểu đồ phân tích theo thời gian
+        col_chart3, col_chart4 = st.columns(2)
+
+        with col_chart3:
+            # Xu hướng số chuyến và doanh thu theo tuần
+            vehicle_time_data = df_vehicle[df_vehicle['Nội dung'].isin(['Số chuyến xe', 'Doanh thu Tổ xe'])]
+
+            if not vehicle_time_data.empty and 'Tuần' in vehicle_time_data.columns:
+                # Pivot để có số chuyến và doanh thu theo tuần
+                time_pivot = vehicle_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                time_pivot = time_pivot.reset_index()
+                time_pivot['Tuần'] = pd.to_numeric(time_pivot['Tuần'], errors='coerce')
+                time_pivot = time_pivot.sort_values('Tuần')
+
+                if 'Doanh thu Tổ xe' in time_pivot.columns and 'Số chuyến xe' in time_pivot.columns:
+                    time_pivot['Doanh thu Tổ xe'] = pd.to_numeric(time_pivot['Doanh thu Tổ xe'], errors='coerce')
+                    time_pivot['Số chuyến xe'] = pd.to_numeric(time_pivot['Số chuyến xe'], errors='coerce')
+
+                    fig_trend = go.Figure()
+
+                    # Doanh thu (trục y bên trái)
+                    fig_trend.add_trace(go.Scatter(
+                        x=time_pivot['Tuần'],
+                        y=time_pivot['Doanh thu Tổ xe'],
+                        name='Doanh thu',
+                        line=dict(color='#2ecc71', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Số chuyến (trục y bên phải)
+                    fig_trend.add_trace(go.Scatter(
+                        x=time_pivot['Tuần'],
+                        y=time_pivot['Số chuyến xe'],
+                        name='Số chuyến',
+                        line=dict(color='#3498db', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_trend.update_layout(
+                        title='📈 Xu hướng doanh thu và số chuyến theo tuần',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Doanh thu (VNĐ)', side='left', color='#2ecc71'),
+                        yaxis2=dict(title='Số chuyến', side='right', overlaying='y', color='#3498db'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_trend, use_container_width=True)
+
+        with col_chart4:
+            # Xu hướng km chạy theo tuần
+            km_time_data = df_vehicle[df_vehicle['Nội dung'].isin(['Tổng km chạy', 'Tổng số nhiên liệu tiêu thụ'])]
+
+            if not km_time_data.empty and 'Tuần' in km_time_data.columns:
+                km_pivot = km_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                km_pivot = km_pivot.reset_index()
+                km_pivot['Tuần'] = pd.to_numeric(km_pivot['Tuần'], errors='coerce')
+                km_pivot = km_pivot.sort_values('Tuần')
+
+                if 'Tổng km chạy' in km_pivot.columns and 'Tổng số nhiên liệu tiêu thụ' in km_pivot.columns:
+                    km_pivot['Tổng km chạy'] = pd.to_numeric(km_pivot['Tổng km chạy'], errors='coerce')
+                    km_pivot['Tổng số nhiên liệu tiêu thụ'] = pd.to_numeric(km_pivot['Tổng số nhiên liệu tiêu thụ'], errors='coerce')
+
+                    fig_km_trend = go.Figure()
+
+                    # Km chạy
+                    fig_km_trend.add_trace(go.Scatter(
+                        x=km_pivot['Tuần'],
+                        y=km_pivot['Tổng km chạy'],
+                        name='Km chạy',
+                        line=dict(color='#9b59b6', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Nhiên liệu (trục phải)
+                    fig_km_trend.add_trace(go.Scatter(
+                        x=km_pivot['Tuần'],
+                        y=km_pivot['Tổng số nhiên liệu tiêu thụ'],
+                        name='Nhiên liệu',
+                        line=dict(color='#f39c12', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_km_trend.update_layout(
+                        title='🛣️ Xu hướng km chạy và nhiên liệu theo tuần',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Km chạy', side='left', color='#9b59b6'),
+                        yaxis2=dict(title='Nhiên liệu (lít)', side='right', overlaying='y', color='#f39c12'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_km_trend, use_container_width=True)
+
+        # Row 2: Phân tích chất lượng và chi phí theo thời gian
+        col_chart5, col_chart6 = st.columns(2)
+
+        with col_chart5:
+            # Xu hướng chất lượng dịch vụ theo tuần
+            quality_time_data = df_vehicle[df_vehicle['Nội dung'].isin(['Tỷ lệ hài lòng của khách hàng', 'Số phiếu khảo sát hài lòng'])]
+
+            if not quality_time_data.empty and 'Tuần' in quality_time_data.columns:
+                quality_pivot = quality_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                quality_pivot = quality_pivot.reset_index()
+                quality_pivot['Tuần'] = pd.to_numeric(quality_pivot['Tuần'], errors='coerce')
+                quality_pivot = quality_pivot.sort_values('Tuần')
+
+                if 'Tỷ lệ hài lòng của khách hàng' in quality_pivot.columns:
+                    quality_pivot['Tỷ lệ hài lòng của khách hàng'] = pd.to_numeric(quality_pivot['Tỷ lệ hài lòng của khách hàng'], errors='coerce')
+
+                    fig_quality_trend = px.line(
+                        quality_pivot,
+                        x='Tuần',
+                        y='Tỷ lệ hài lòng của khách hàng',
+                        title='😊 Xu hướng mức độ hài lòng theo tuần',
+                        line_shape='linear',
+                        color_discrete_sequence=['#27ae60']
+                    )
+                    fig_quality_trend.update_layout(height=300, yaxis_title='Tỷ lệ hài lòng (%)')
+                    fig_quality_trend.update_traces(line_width=3)
+                    st.plotly_chart(fig_quality_trend, use_container_width=True)
+
+        with col_chart6:
+            # Xu hướng chi phí bảo dưỡng theo tuần
+            cost_time_data = df_vehicle[df_vehicle['Nội dung'] == 'Chi phí bảo dưỡng']
+
+            if not cost_time_data.empty and 'Tuần' in cost_time_data.columns:
+                cost_time_data['Tuần'] = pd.to_numeric(cost_time_data['Tuần'], errors='coerce')
+                cost_time_data['Chi phí bảo dưỡng'] = pd.to_numeric(cost_time_data['Số liệu'], errors='coerce')
+                cost_time_data = cost_time_data.sort_values('Tuần')
+
+                fig_cost_trend = px.bar(
+                    cost_time_data,
+                    x='Tuần',
+                    y='Chi phí bảo dưỡng',
+                    title='🔧 Chi phí bảo dưỡng theo tuần',
+                    color_discrete_sequence=['#e74c3c']
+                )
+                fig_cost_trend.update_layout(height=300, yaxis_title='Chi phí (VNĐ)')
+                st.plotly_chart(fig_cost_trend, use_container_width=True)
+
+        # 📈 Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Row 3: Biểu đồ phân tích chi tiết theo format 2 biểu đồ cuối
+        col_detail1, col_detail2 = st.columns(2)
+
+        with col_detail1:
+            # Biểu đồ phân tích hiệu suất vận hành (km hành chính vs cứu thương)
+            km_detail_data = df_vehicle[df_vehicle['Nội dung'].isin(['Km chạy của hành chính', 'Km chạy của xe cứu thương'])]
+
+            if not km_detail_data.empty and 'Tuần' in km_detail_data.columns:
+                km_detail_pivot = km_detail_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                km_detail_pivot = km_detail_pivot.reset_index()
+                km_detail_pivot['Tuần'] = pd.to_numeric(km_detail_pivot['Tuần'], errors='coerce')
+                km_detail_pivot = km_detail_pivot.sort_values('Tuần')
+
+                if 'Km chạy của hành chính' in km_detail_pivot.columns and 'Km chạy của xe cứu thương' in km_detail_pivot.columns:
+                    km_detail_pivot['Km chạy của hành chính'] = pd.to_numeric(km_detail_pivot['Km chạy của hành chính'], errors='coerce')
+                    km_detail_pivot['Km chạy của xe cứu thương'] = pd.to_numeric(km_detail_pivot['Km chạy của xe cứu thương'], errors='coerce')
+
+                    fig_km_detail = go.Figure()
+
+                    # Km hành chính
+                    fig_km_detail.add_trace(go.Scatter(
+                        x=km_detail_pivot['Tuần'],
+                        y=km_detail_pivot['Km chạy của hành chính'],
+                        mode='lines',
+                        name='Km hành chính',
+                        line=dict(color='#3498db', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Km cứu thương (trục phải)
+                    fig_km_detail.add_trace(go.Scatter(
+                        x=km_detail_pivot['Tuần'],
+                        y=km_detail_pivot['Km chạy của xe cứu thương'],
+                        mode='lines',
+                        name='Km cứu thương',
+                        line=dict(color='#e74c3c', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_km_detail.update_layout(
+                        title='🚗 Phân tích km chạy theo loại xe',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Km hành chính', side='left', color='#3498db'),
+                        yaxis2=dict(title='Km cứu thương', side='right', overlaying='y', color='#e74c3c'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_km_detail, use_container_width=True)
+
+        with col_detail2:
+            # Biểu đồ tương quan doanh thu - chi phí
+            revenue_cost_data = df_vehicle[df_vehicle['Nội dung'].isin(['Doanh thu Tổ xe', 'Chi phí bảo dưỡng'])]
+
+            if not revenue_cost_data.empty and 'Tuần' in revenue_cost_data.columns:
+                rc_pivot = revenue_cost_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                rc_pivot = rc_pivot.reset_index()
+                rc_pivot['Tuần'] = pd.to_numeric(rc_pivot['Tuần'], errors='coerce')
+                rc_pivot = rc_pivot.sort_values('Tuần')
+
+                if 'Doanh thu Tổ xe' in rc_pivot.columns and 'Chi phí bảo dưỡng' in rc_pivot.columns:
+                    rc_pivot['Doanh thu Tổ xe'] = pd.to_numeric(rc_pivot['Doanh thu Tổ xe'], errors='coerce')
+                    rc_pivot['Chi phí bảo dưỡng'] = pd.to_numeric(rc_pivot['Chi phí bảo dưỡng'], errors='coerce')
+
+                    fig_revenue_cost = go.Figure()
+
+                    # Doanh thu
+                    fig_revenue_cost.add_trace(go.Scatter(
+                        x=rc_pivot['Tuần'],
+                        y=rc_pivot['Doanh thu Tổ xe'],
+                        mode='lines',
+                        name='Doanh thu',
+                        line=dict(color='#2ecc71', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Chi phí (trục phải)
+                    fig_revenue_cost.add_trace(go.Scatter(
+                        x=rc_pivot['Tuần'],
+                        y=rc_pivot['Chi phí bảo dưỡng'],
+                        mode='lines',
+                        name='Chi phí bảo dưỡng',
+                        line=dict(color='#f39c12', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_revenue_cost.update_layout(
+                        title='💰 Phân tích doanh thu - chi phí',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Doanh thu (VNĐ)', side='left', color='#2ecc71'),
+                        yaxis2=dict(title='Chi phí (VNĐ)', side='right', overlaying='y', color='#f39c12'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_revenue_cost, use_container_width=True)
+
+        # Biểu đồ giống như document tabs
+        create_vehicle_charts(df_vehicle)
+
+        # Bảng dữ liệu chi tiết
+        st.markdown('<div class="section-header">📊 Dữ liệu chi tiết</div>', unsafe_allow_html=True)
+
+        # Hiển thị bảng với formatting
+        display_df = df_vehicle.copy()
+        # Clean and format the data display
+        def clean_and_format_number(x):
+            # Clean non-breaking spaces and other whitespace
+            cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+            numeric_val = pd.to_numeric(cleaned, errors='coerce')
+            if pd.isna(numeric_val):
+                return str(x)  # Return original if conversion fails
+            elif numeric_val >= 1:
+                return f"{numeric_val:,.0f}"
+            else:
+                return f"{numeric_val:.1f}"
+
+        display_df['Số liệu'] = display_df['Số liệu'].apply(clean_and_format_number)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    else:
+        st.error("❌ Không có dữ liệu Tổ xe")
+        st.info("📁 Upload dữ liệu hoặc kiểm tra kết nối GitHub để xem thống kê chi tiết")
+
+
+        # Pivot Table theo tuần
+        st.markdown('<div class="section-header">📈 Bảng phân tích theo tuần</div>', unsafe_allow_html=True)
+
+        def create_call_pivot_table(df):
+            """Tạo pivot table cho dữ liệu tổng đài"""
+            if 'Tuần' not in df.columns:
+                st.warning("⚠️ Không tìm thấy cột 'Tuần' trong dữ liệu")
+                return None
+
+            # Chọn các metrics chính để hiển thị trong pivot table
+            main_metrics = [
+                'Tổng số cuộc gọi đến Bệnh viện',
+                'Tổng số cuộc gọi nhỡ do từ chối',
+                'Tổng số cuộc gọi nhỡ do không bắt máy',
+                'Tổng số cuộc gọi đến Hotline'
+            ]
+
+            # Lọc data cho các metrics chính
+            pivot_data = df[df['Nội dung'].isin(main_metrics)].copy()
+
+            if pivot_data.empty:
+                st.warning("⚠️ Không có dữ liệu cho các metrics chính")
+                return None
+
+            # Clean data
+            pivot_data['Số liệu'] = pivot_data['Số liệu'].astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+            pivot_data['Số liệu'] = pd.to_numeric(pivot_data['Số liệu'], errors='coerce').fillna(0)
+
+            # Tạo pivot table
+            pivot = pivot_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+            pivot = pivot.reset_index()
+            pivot['Tuần'] = pd.to_numeric(pivot['Tuần'], errors='coerce')
+            pivot = pivot.sort_values('Tuần')
+
+            # Tính tỷ lệ trả lời cho từng tuần
+            if 'Tổng số cuộc gọi đến Bệnh viện' in pivot.columns and 'Tổng số cuộc gọi nhỡ do từ chối' in pivot.columns and 'Tổng số cuộc gọi nhỡ do không bắt máy' in pivot.columns:
+                pivot['Tổng cuộc gọi nhỡ'] = pivot['Tổng số cuộc gọi nhỡ do từ chối'] + pivot['Tổng số cuộc gọi nhỡ do không bắt máy']
+                pivot['Tỷ lệ trả lời (%)'] = ((pivot['Tổng số cuộc gọi đến Bệnh viện'] - pivot['Tổng cuộc gọi nhỡ']) / pivot['Tổng số cuộc gọi đến Bệnh viện'] * 100).fillna(0)
+
+            return pivot
+
+        pivot_df = create_call_pivot_table(df_calls)
+
+        if pivot_df is not None:
+            # Format hiển thị pivot table
+            display_pivot = pivot_df.copy()
+
+            # Format các cột chính
+            main_cols = ['Tổng số cuộc gọi đến Bệnh viện', 'Tổng số cuộc gọi nhỡ do từ chối', 'Tổng số cuộc gọi nhỡ do không bắt máy', 'Tổng số cuộc gọi đến Hotline']
+            for col in main_cols:
+                if col in display_pivot.columns:
+                    display_pivot[col] = display_pivot[col].apply(lambda x: f"{int(x):,}" if pd.notna(x) else "0")
+
+            # Format tỷ lệ trả lời
+            if 'Tỷ lệ trả lời (%)' in display_pivot.columns:
+                display_pivot['Tỷ lệ trả lời (%)'] = display_pivot['Tỷ lệ trả lời (%)'].apply(lambda x: f"{x:.1f}%" if pd.notna(x) else "0%")
+
+            # Format change columns (ẩn các cột không cần thiết để table gọn hơn)
+            cols_to_drop = [col for col in display_pivot.columns if '_Change' in col or col == 'Tổng cuộc gọi nhỡ']
+            if cols_to_drop:
+                display_pivot = display_pivot.drop(columns=cols_to_drop)
+
+            st.dataframe(display_pivot, use_container_width=True, hide_index=True)
+
+# Tab 5: Tổng đài
+with tab5:
+    st.markdown('<div class="tab-header">📞 Báo cáo Tổng đài</div>', unsafe_allow_html=True)
+
+    def create_call_center_data():
+        """Tạo dữ liệu mẫu cho tổng đài"""
+        return pd.DataFrame({
+            'Tuần': [39] * 12,
+            'Tháng': [9] * 12,
+            'Nội dung': [
+                'Tổng số cuộc gọi đến Bệnh viện',
+                'Tổng số cuộc gọi nhỡ do từ chối',
+                'Tổng số cuộc gọi nhỡ do không bắt máy',
+                'Số cuộc gọi đến (Nhánh 0-Tổng đài viên)',
+                'Nhỡ do từ chối (Nhánh 0-Tổng đài viên)',
+                'Nhỡ do không bắt máy (Nhánh 0-Tổng đài viên)',
+                'Số cuộc gọi đến (Nhánh 1-Cấp cứu)',
+                'Số cuộc gọi đến (Nhánh 2-Tư vấn Thuốc)',
+                'Số cuộc gọi đến (Nhánh 3-PKQT)',
+                'Số cuộc gọi đến (Nhánh 4-Vấn đề khác)',
+                'Hottline',
+                'Tỷ lệ trả lời'
+            ],
+            'Số liệu': [1250, 185, 95, 450, 65, 35, 320, 280, 150, 120, 85, 87.2]
+        })
+
+    # Load data từ DataManager hoặc dữ liệu mẫu
+    df_calls = data_manager.get_category_data('Tổng đài')
+
+    if df_calls is not None:
+        st.info(f"✅ Đã tải {len(df_calls)} bản ghi cho Tổng đài từ file: {data_manager.metadata['filename']}")
+    else:
+        st.info("📁 Chưa có dữ liệu được tải từ sidebar. Hiển thị dữ liệu mẫu.")
+        df_calls = create_call_center_data()
+
+    if not df_calls.empty:
+        # Metrics overview tổng quan
+        st.markdown('<div class="section-header">📊 Tổng quan hoạt động Tổng đài</div>', unsafe_allow_html=True)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Debug: Hiển thị cấu trúc dữ liệu
+        with st.expander("🔍 Debug: Cấu trúc dữ liệu Tổng đài", expanded=False):
+            st.write("**Columns:**", list(df_calls.columns))
+            st.write("**Shape:**", df_calls.shape)
+            if 'Nội dung' in df_calls.columns:
+                st.write("**Nội dung values:**", df_calls['Nội dung'].unique().tolist())
+            st.dataframe(df_calls.head())
+
+        # Tính toán metrics từ dữ liệu - CỘNG TỔNG TẤT CẢ CÁC TUẦN
+        def get_call_metric_value(content_name):
+            if 'Nội dung' not in df_calls.columns or 'Số liệu' not in df_calls.columns:
+                return 0
+
+            # Lấy tất cả các hàng có nội dung này và cộng tổng
+            result = df_calls[df_calls['Nội dung'] == content_name]['Số liệu']
+            if len(result) > 0:
+                # Clean data: remove non-breaking spaces and other whitespace characters
+                cleaned_result = result.astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+                # Convert tất cả values thành numeric và cộng tổng
+                numeric_values = pd.to_numeric(cleaned_result, errors='coerce').fillna(0)
+                total = numeric_values.sum()
+                return total
+            return 0
+
+        tong_goi = get_call_metric_value('Tổng số cuộc gọi đến Bệnh viện')
+        nho_tu_choi = get_call_metric_value('Tổng số cuộc gọi nhỡ do từ chối')
+        nho_ko_bat = get_call_metric_value('Tổng số cuộc gọi nhỡ do không bắt máy')
+        ty_le_raw = get_call_metric_value('Tỷ lệ trả lời')
+
+        # Tính tỷ lệ trả lời từ dữ liệu có sẵn (tổng cuộc gọi - cuộc gọi nhỡ) / tổng cuộc gọi * 100
+        ty_le = 0
+        if tong_goi > 0:
+            tong_nho = nho_tu_choi + nho_ko_bat
+            cuoc_goi_tra_loi = tong_goi - tong_nho
+            ty_le = (cuoc_goi_tra_loi / tong_goi) * 100 if tong_goi > 0 else 0
+
+        with col1:
+            st.metric("📞 Tổng cuộc gọi", f"{int(tong_goi):,}", help="Tổng số cuộc gọi đến Bệnh viện tất cả các tuần")
+        with col2:
+            st.metric("❌ Từ chối", f"{int(nho_tu_choi):,}", help="Tổng số cuộc gọi nhỡ do từ chối tất cả các tuần")
+        with col3:
+            st.metric("📵 Không bắt", f"{int(nho_ko_bat):,}", help="Tổng số cuộc gọi nhỡ do không bắt máy tất cả các tuần")
+        with col4:
+            st.metric("✅ Tỷ lệ trả lời", f"{ty_le:.1f}%", help="Tỷ lệ trả lời trung bình")
+
+        # Thêm hàng metrics thứ 2
+        col5, col6, col7, col8 = st.columns(4)
+
+        nhanh_0 = get_call_metric_value('Số cuộc gọi đến (Nhánh 0-Tổng đài viên)')
+        nhanh_1 = get_call_metric_value('Số cuộc gọi đến (Nhánh 1-Cấp cứu)')
+        nhanh_2 = get_call_metric_value('Số cuộc gọi đến (Nhánh 2-Tư vấn Thuốc)')
+        hotline = get_call_metric_value('Hottline')
+
+        with col5:
+            st.metric("📞 Nhánh 0", f"{int(nhanh_0):,}", help="Tổng cuộc gọi đến Nhánh 0-Tổng đài viên tất cả các tuần")
+        with col6:
+            st.metric("🚑 Nhánh 1", f"{int(nhanh_1):,}", help="Tổng cuộc gọi đến Nhánh 1-Cấp cứu tất cả các tuần")
+        with col7:
+            st.metric("💊 Nhánh 2", f"{int(nhanh_2):,}", help="Tổng cuộc gọi đến Nhánh 2-Tư vấn Thuốc tất cả các tuần")
+        with col8:
+            st.metric("☎️ Hotline", f"{int(hotline):,}", help="Tổng cuộc gọi Hotline tất cả các tuần")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Pivot Table Section - giống như Tab 4
+        create_call_pivot_table(df_calls)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Biểu đồ tổng quan
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích</div>', unsafe_allow_html=True)
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            # Biểu đồ phân bố cuộc gọi theo nhánh
+            branch_patterns = ['Số cuộc gọi đến (Nhánh 0-Tổng đài viên)', 'Số cuộc gọi đến (Nhánh 1-Cấp cứu)',
+                              'Số cuộc gọi đến (Nhánh 2-Tư vấn Thuốc)', 'Số cuộc gọi đến (Nhánh 3-PKQT)',
+                              'Số cuộc gọi đến (Nhánh 4-Vấn đề khác)']
+            branch_data = df_calls[df_calls['Nội dung'].isin(branch_patterns)]
+
+            if not branch_data.empty:
+                # Làm sạch tên hiển thị
+                branch_data_clean = branch_data.copy()
+                branch_data_clean['Nội dung'] = branch_data_clean['Nội dung'].str.replace('Số cuộc gọi đến (', '').str.replace(')', '')
+
+                fig_branch = px.pie(branch_data_clean, values='Số liệu', names='Nội dung',
+                                  title='📞 Phân bố cuộc gọi theo nhánh',
+                                  hole=0.4)
+                fig_branch.update_layout(height=400)
+                st.plotly_chart(fig_branch, use_container_width=True)
+
+        with col_chart2:
+            # Biểu đồ tỷ lệ trả lời vs cuộc gọi nhỡ
+            response_data = df_calls[df_calls['Nội dung'].isin(['Tổng số cuộc gọi đến Bệnh viện', 'Tổng số cuộc gọi nhỡ do từ chối', 'Tổng số cuộc gọi nhỡ do không bắt máy'])]
+            if not response_data.empty:
+                # Tính toán dữ liệu hiển thị
+                tong_goi_chart = get_call_metric_value('Tổng số cuộc gọi đến Bệnh viện')
+                nho_tu_choi_chart = get_call_metric_value('Tổng số cuộc gọi nhỡ do từ chối')
+                nho_ko_bat_chart = get_call_metric_value('Tổng số cuộc gọi nhỡ do không bắt máy')
+                tra_loi_chart = tong_goi_chart - nho_tu_choi_chart - nho_ko_bat_chart
+
+                response_summary = pd.DataFrame({
+                    'Loại': ['Trả lời', 'Từ chối', 'Không bắt'],
+                    'Số liệu': [tra_loi_chart, nho_tu_choi_chart, nho_ko_bat_chart]
+                })
+
+                fig_response = px.bar(response_summary, x='Loại', y='Số liệu',
+                                    title='📊 Tỷ lệ trả lời cuộc gọi',
+                                    color='Loại',
+                                    color_discrete_map={'Trả lời': '#2ecc71', 'Từ chối': '#e74c3c', 'Không bắt': '#f39c12'})
+                fig_response.update_layout(height=400)
+                st.plotly_chart(fig_response, use_container_width=True)
+
+        # Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Row 1: Biểu đồ tổng quan và phân tích nhánh
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            # Xu hướng tổng cuộc gọi và cuộc gọi nhỡ theo tuần
+            call_time_data = df_calls[df_calls['Nội dung'].isin(['Tổng số cuộc gọi đến Bệnh viện', 'Tổng số cuộc gọi nhỡ do từ chối', 'Tổng số cuộc gọi nhỡ do không bắt máy'])]
+
+            if not call_time_data.empty and 'Tuần' in call_time_data.columns:
+                call_pivot = call_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                call_pivot = call_pivot.reset_index()
+                call_pivot['Tuần'] = pd.to_numeric(call_pivot['Tuần'], errors='coerce')
+                call_pivot = call_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in call_pivot.columns:
+                    if col != 'Tuần':
+                        call_pivot[col] = pd.to_numeric(call_pivot[col], errors='coerce').fillna(0)
+
+                if 'Tổng số cuộc gọi đến Bệnh viện' in call_pivot.columns:
+                    fig_call_trend = go.Figure()
+
+                    # Tổng cuộc gọi
+                    fig_call_trend.add_trace(go.Scatter(
+                        x=call_pivot['Tuần'],
+                        y=call_pivot['Tổng số cuộc gọi đến Bệnh viện'],
+                        mode='lines',
+                        name='Tổng cuộc gọi',
+                        line=dict(color='#2ecc71', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Cuộc gọi nhỡ (trục phải) - tính tổng từ chối + không bắt
+                    if 'Tổng số cuộc gọi nhỡ do từ chối' in call_pivot.columns and 'Tổng số cuộc gọi nhỡ do không bắt máy' in call_pivot.columns:
+                        call_pivot['Tổng cuộc gọi nhỡ'] = call_pivot['Tổng số cuộc gọi nhỡ do từ chối'] + call_pivot['Tổng số cuộc gọi nhỡ do không bắt máy']
+
+                        fig_call_trend.add_trace(go.Scatter(
+                            x=call_pivot['Tuần'],
+                            y=call_pivot['Tổng cuộc gọi nhỡ'],
+                            mode='lines',
+                            name='Cuộc gọi nhỡ',
+                            line=dict(color='#e74c3c', width=3),
+                            yaxis='y2'
+                        ))
+
+                    fig_call_trend.update_layout(
+                        title='📞 Xu hướng cuộc gọi theo tuần',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Tổng cuộc gọi', side='left', color='#2ecc71'),
+                        yaxis2=dict(title='Cuộc gọi nhỡ', side='right', overlaying='y', color='#e74c3c'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_call_trend, use_container_width=True)
+
+        with col_chart2:
+            # Phân tích cuộc gọi theo nhánh
+            branch_data = df_calls[df_calls['Nội dung'].str.contains('Nhánh', na=False)]
+
+            if not branch_data.empty and 'Tuần' in branch_data.columns:
+                # Lọc chỉ lấy số cuộc gọi đến các nhánh (không lấy nhỡ)
+                branch_call_data = branch_data[branch_data['Nội dung'].str.contains('Số cuộc gọi đến', na=False)]
+
+                if not branch_call_data.empty:
+                    branch_pivot = branch_call_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                    branch_pivot = branch_pivot.reset_index()
+                    branch_pivot['Tuần'] = pd.to_numeric(branch_pivot['Tuần'], errors='coerce')
+                    branch_pivot = branch_pivot.sort_values('Tuần')
+
+                    # Clean data
+                    for col in branch_pivot.columns:
+                        if col != 'Tuần':
+                            branch_pivot[col] = pd.to_numeric(branch_pivot[col], errors='coerce').fillna(0)
+
+                    # Tạo biểu đồ stacked bar
+                    fig_branch = go.Figure()
+
+                    colors = ['#3498db', '#9b59b6', '#f39c12', '#1abc9c', '#34495e']
+                    color_idx = 0
+
+                    for col in branch_pivot.columns:
+                        if col != 'Tuần':
+                            fig_branch.add_trace(go.Bar(
+                                x=branch_pivot['Tuần'],
+                                y=branch_pivot[col],
+                                name=col.replace('Số cuộc gọi đến (', '').replace(')', ''),
+                                marker_color=colors[color_idx % len(colors)]
+                            ))
+                            color_idx += 1
+
+                    fig_branch.update_layout(
+                        title='🔗 Phân bố cuộc gọi theo nhánh',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis_title='Số cuộc gọi',
+                        barmode='stack',
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_branch, use_container_width=True)
+
+        # 📈 Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Row 2: Biểu đồ phân tích chi tiết theo format dual axis
+        col_detail1, col_detail2 = st.columns(2)
+
+        with col_detail1:
+            # Biểu đồ phân tích tỷ lệ trả lời và tổng cuộc gọi
+            performance_data = df_calls[df_calls['Nội dung'].isin(['Tỷ lệ trả lời', 'Tổng số cuộc gọi đến Bệnh viện'])]
+
+            if not performance_data.empty and 'Tuần' in performance_data.columns:
+                perf_pivot = performance_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                perf_pivot = perf_pivot.reset_index()
+                perf_pivot['Tuần'] = pd.to_numeric(perf_pivot['Tuần'], errors='coerce')
+                perf_pivot = perf_pivot.sort_values('Tuần')
+
+                if 'Tỷ lệ trả lời' in perf_pivot.columns and 'Tổng số cuộc gọi đến Bệnh viện' in perf_pivot.columns:
+                    perf_pivot['Tỷ lệ trả lời'] = pd.to_numeric(perf_pivot['Tỷ lệ trả lời'], errors='coerce')
+                    perf_pivot['Tổng số cuộc gọi đến Bệnh viện'] = pd.to_numeric(perf_pivot['Tổng số cuộc gọi đến Bệnh viện'], errors='coerce')
+
+                    fig_performance = go.Figure()
+
+                    # Tỷ lệ trả lời
+                    fig_performance.add_trace(go.Scatter(
+                        x=perf_pivot['Tuần'],
+                        y=perf_pivot['Tỷ lệ trả lời'],
+                        mode='lines',
+                        name='Tỷ lệ trả lời',
+                        line=dict(color='#27ae60', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Tổng cuộc gọi (trục phải)
+                    fig_performance.add_trace(go.Scatter(
+                        x=perf_pivot['Tuần'],
+                        y=perf_pivot['Tổng số cuộc gọi đến Bệnh viện'],
+                        mode='lines',
+                        name='Tổng cuộc gọi',
+                        line=dict(color='#3498db', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_performance.update_layout(
+                        title='📈 Tương quan tỷ lệ trả lời - tổng cuộc gọi',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Tỷ lệ trả lời (%)', side='left', color='#27ae60'),
+                        yaxis2=dict(title='Tổng cuộc gọi', side='right', overlaying='y', color='#3498db'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_performance, use_container_width=True)
+
+        with col_detail2:
+            # Biểu đồ phân tích hotline và tổng đài viên
+            operator_data = df_calls[df_calls['Nội dung'].isin(['Hottline', 'Số cuộc gọi đến (Nhánh 0-Tổng đài viên)'])]
+
+            if not operator_data.empty and 'Tuần' in operator_data.columns:
+                op_pivot = operator_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                op_pivot = op_pivot.reset_index()
+                op_pivot['Tuần'] = pd.to_numeric(op_pivot['Tuần'], errors='coerce')
+                op_pivot = op_pivot.sort_values('Tuần')
+
+                if 'Hottline' in op_pivot.columns and 'Số cuộc gọi đến (Nhánh 0-Tổng đài viên)' in op_pivot.columns:
+                    op_pivot['Hottline'] = pd.to_numeric(op_pivot['Hottline'], errors='coerce')
+                    op_pivot['Số cuộc gọi đến (Nhánh 0-Tổng đài viên)'] = pd.to_numeric(op_pivot['Số cuộc gọi đến (Nhánh 0-Tổng đài viên)'], errors='coerce')
+
+                    fig_operator = go.Figure()
+
+                    # Hotline
+                    fig_operator.add_trace(go.Scatter(
+                        x=op_pivot['Tuần'],
+                        y=op_pivot['Hottline'],
+                        mode='lines',
+                        name='Hotline',
+                        line=dict(color='#e67e22', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Tổng đài viên (trục phải)
+                    fig_operator.add_trace(go.Scatter(
+                        x=op_pivot['Tuần'],
+                        y=op_pivot['Số cuộc gọi đến (Nhánh 0-Tổng đài viên)'],
+                        mode='lines',
+                        name='Nhánh tổng đài viên',
+                        line=dict(color='#8e44ad', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_operator.update_layout(
+                        title='☎️ Phân tích hotline - tổng đài viên',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Hotline', side='left', color='#e67e22'),
+                        yaxis2=dict(title='Nhánh tổng đài viên', side='right', overlaying='y', color='#8e44ad'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_operator, use_container_width=True)
+
+        # Bảng dữ liệu chi tiết
+        st.markdown('<div class="section-header">📊 Dữ liệu chi tiết</div>', unsafe_allow_html=True)
+
+        # Hiển thị bảng với formatting
+        display_df = df_calls.copy()
+        # Clean and format the data display
+        def clean_and_format_call_number(x):
+            # Clean non-breaking spaces and other whitespace
+            cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+            numeric_val = pd.to_numeric(cleaned, errors='coerce')
+            if pd.isna(numeric_val):
+                return str(x)  # Return original if conversion fails
+            elif numeric_val >= 1:
+                return f"{numeric_val:,.0f}"
+            else:
+                return f"{numeric_val:.1f}"
+
+        display_df['Số liệu'] = display_df['Số liệu'].apply(clean_and_format_call_number)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    else:
+        st.error("❌ Không có dữ liệu Tổng đài")
+        st.info("📁 Upload dữ liệu hoặc kiểm tra kết nối GitHub để xem thống kê chi tiết")
+
+# Tab 6: Hệ thống thư ký
+with tab6:
+    st.markdown('<div class="tab-header">👥 Hệ thống Thư ký Bệnh viện</div>', unsafe_allow_html=True)
+
+    def create_secretary_data():
+        """Tạo dữ liệu mẫu cho hệ thống thư ký"""
+        return pd.DataFrame({
+            'Tuần': [39] * 14,
+            'Tháng': [9] * 14,
+            'Nội dung': [
+                'Số thư ký được sơ tuyển',
+                'Số thư ký được tuyển dụng',
+                'Số thư ký nhận việc',
+                'Số thư ký nghỉ việc',
+                'Số thư ký được điều động',
+                'Tổng số thư ký',
+                '- Thư ký hành chính',
+                '- Thư ký chuyên môn',
+                'Số buổi sinh hoạt cho thư ký',
+                'Số thư ký tham gia sinh hoạt',
+                'Số buổi tập huấn, đào tạo cho thư ký',
+                'Số thư ký tham gia tập huấn, đào tạo',
+                'Số buổi tham quan, học tập',
+                'Số thư ký tham gia tham quan, học tập'
+            ],
+            'Số liệu': [15, 12, 10, 3, 2, 85, 45, 40, 4, 78, 6, 82, 2, 35]
+        })
+
+    # Load data từ DataManager hoặc dữ liệu mẫu
+    df_secretary = data_manager.get_category_data('Hệ thống thư ký Bệnh viện')
+
+    if df_secretary is not None:
+        st.info(f"✅ Đã tải {len(df_secretary)} bản ghi cho Hệ thống thư ký từ file: {data_manager.metadata['filename']}")
+    else:
+        st.info("📁 Chưa có dữ liệu được tải từ sidebar. Hiển thị dữ liệu mẫu.")
+        df_secretary = create_secretary_data()
+
+    # Metrics
+    col1, col2, col3, col4 = st.columns(4)
+
+    if not df_secretary.empty:
+        # Metrics overview tổng quan
+        st.markdown('<div class="section-header">📊 Tổng quan hoạt động Hệ thống thư ký</div>', unsafe_allow_html=True)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Debug: Hiển thị cấu trúc dữ liệu
+        with st.expander("🔍 Debug: Cấu trúc dữ liệu Hệ thống thư ký", expanded=False):
+            st.write("**Columns:**", list(df_secretary.columns))
+            st.write("**Shape:**", df_secretary.shape)
+            if 'Nội dung' in df_secretary.columns:
+                st.write("**Nội dung values:**", df_secretary['Nội dung'].unique().tolist())
+            st.dataframe(df_secretary.head())
+
+        # Tính toán metrics từ dữ liệu - CỘNG TỔNG TẤT CẢ CÁC TUẦN
+        def get_secretary_metric_value(content_name):
+            if 'Nội dung' not in df_secretary.columns or 'Số liệu' not in df_secretary.columns:
+                return 0
+
+            # Lấy tất cả các hàng có nội dung này và cộng tổng
+            result = df_secretary[df_secretary['Nội dung'] == content_name]['Số liệu']
+            if len(result) > 0:
+                # Clean data: remove non-breaking spaces and other whitespace characters
+                cleaned_result = result.astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+                # Convert tất cả values thành numeric và cộng tổng
+                numeric_values = pd.to_numeric(cleaned_result, errors='coerce').fillna(0)
+                total = numeric_values.sum()
+                return total
+            return 0
+
+        tong_tk = get_secretary_metric_value('Tổng số thư ký')
+        tuyen_moi = get_secretary_metric_value('Số thư ký được tuyển dụng')
+        nghi_viec = get_secretary_metric_value('Số thư ký nghỉ việc')
+        dao_tao = get_secretary_metric_value('Số buổi tập huấn, đào tạo cho thư ký')
+
+        with col1:
+            st.metric("👥 Tổng thư ký", f"{int(tong_tk):,}", help="Tổng số thư ký tất cả các tuần")
+        with col2:
+            st.metric("✅ Tuyển mới", f"{int(tuyen_moi):,}", help="Tổng số thư ký được tuyển dụng tất cả các tuần")
+        with col3:
+            st.metric("❌ Nghỉ việc", f"{int(nghi_viec):,}", help="Tổng số thư ký nghỉ việc tất cả các tuần")
+        with col4:
+            st.metric("📚 Đào tạo", f"{int(dao_tao):,} buổi", help="Tổng số buổi tập huấn, đào tạo tất cả các tuần")
+
+        # Thêm hàng metrics thứ 2
+        col5, col6, col7, col8 = st.columns(4)
+
+        hanh_chinh = get_secretary_metric_value('- Thư ký hành chính')
+        chuyen_mon = get_secretary_metric_value('- Thư ký chuyên môn')
+        sinh_hoat = get_secretary_metric_value('Số buổi sinh hoạt cho thư ký')
+        tham_quan = get_secretary_metric_value('Số buổi tham quan, học tập')
+
+        with col5:
+            st.metric("🏢 Hành chính", f"{int(hanh_chinh):,}", help="Tổng số thư ký hành chính tất cả các tuần")
+        with col6:
+            st.metric("⚕️ Chuyên môn", f"{int(chuyen_mon):,}", help="Tổng số thư ký chuyên môn tất cả các tuần")
+        with col7:
+            st.metric("🎯 Sinh hoạt", f"{int(sinh_hoat):,} buổi", help="Tổng số buổi sinh hoạt tất cả các tuần")
+        with col8:
+            st.metric("🎓 Tham quan", f"{int(tham_quan):,} buổi", help="Tổng số buổi tham quan, học tập tất cả các tuần")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Pivot Table Section - giống như Tab 4
+        create_secretary_pivot_table(df_secretary)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Biểu đồ tổng quan
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích</div>', unsafe_allow_html=True)
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            # Biểu đồ phân bố thư ký theo loại
+            type_data = df_secretary[df_secretary['Nội dung'].isin(['- Thư ký hành chính', '- Thư ký chuyên môn'])]
+
+            if not type_data.empty:
+                # Làm sạch tên hiển thị
+                type_data_clean = type_data.copy()
+                type_data_clean['Nội dung'] = type_data_clean['Nội dung'].str.replace('- Thư ký ', '')
+
+                fig_type = px.pie(type_data_clean, values='Số liệu', names='Nội dung',
+                                title='👥 Phân bố thư ký theo loại',
+                                hole=0.4)
+                fig_type.update_layout(height=400)
+                st.plotly_chart(fig_type, use_container_width=True)
+
+        with col_chart2:
+            # Biểu đồ tuyển dụng vs nghỉ việc
+            hr_data = df_secretary[df_secretary['Nội dung'].isin(['Số thư ký được tuyển dụng', 'Số thư ký nghỉ việc'])]
+            if not hr_data.empty:
+                hr_summary = pd.DataFrame({
+                    'Loại': ['Tuyển dụng', 'Nghỉ việc'],
+                    'Số liệu': [get_secretary_metric_value('Số thư ký được tuyển dụng'), get_secretary_metric_value('Số thư ký nghỉ việc')]
+                })
+
+                fig_hr = px.bar(hr_summary, x='Loại', y='Số liệu',
+                              title='📊 Tuyển dụng vs Nghỉ việc',
+                              color='Loại',
+                              color_discrete_map={'Tuyển dụng': '#2ecc71', 'Nghỉ việc': '#e74c3c'})
+                fig_hr.update_layout(height=400)
+                st.plotly_chart(fig_hr, use_container_width=True)
+
+        # Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Row 1: Biểu đồ tổng quan hoạt động
+        col_detail1, col_detail2 = st.columns(2)
+
+        with col_detail1:
+            # Xu hướng tổng số thư ký theo tuần
+            secretary_time_data = df_secretary[df_secretary['Nội dung'].isin(['Tổng số thư ký', 'Số thư ký được tuyển dụng', 'Số thư ký nghỉ việc'])]
+
+            if not secretary_time_data.empty and 'Tuần' in secretary_time_data.columns:
+                secretary_pivot = secretary_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                secretary_pivot = secretary_pivot.reset_index()
+                secretary_pivot['Tuần'] = pd.to_numeric(secretary_pivot['Tuần'], errors='coerce')
+                secretary_pivot = secretary_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in secretary_pivot.columns:
+                    if col != 'Tuần':
+                        secretary_pivot[col] = pd.to_numeric(secretary_pivot[col], errors='coerce').fillna(0)
+
+                if 'Tổng số thư ký' in secretary_pivot.columns:
+                    fig_secretary_trend = go.Figure()
+
+                    # Tổng số thư ký
+                    fig_secretary_trend.add_trace(go.Scatter(
+                        x=secretary_pivot['Tuần'],
+                        y=secretary_pivot['Tổng số thư ký'],
+                        mode='lines',
+                        name='Tổng số thư ký',
+                        line=dict(color='#3498db', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Tuyển dụng và nghỉ việc (trục phải)
+                    if 'Số thư ký được tuyển dụng' in secretary_pivot.columns:
+                        fig_secretary_trend.add_trace(go.Scatter(
+                            x=secretary_pivot['Tuần'],
+                            y=secretary_pivot['Số thư ký được tuyển dụng'],
+                            mode='lines',
+                            name='Tuyển dụng',
+                            line=dict(color='#2ecc71', width=3),
+                            yaxis='y2'
+                        ))
+
+                    if 'Số thư ký nghỉ việc' in secretary_pivot.columns:
+                        fig_secretary_trend.add_trace(go.Scatter(
+                            x=secretary_pivot['Tuần'],
+                            y=secretary_pivot['Số thư ký nghỉ việc'],
+                            mode='lines',
+                            name='Nghỉ việc',
+                            line=dict(color='#e74c3c', width=3),
+                            yaxis='y2'
+                        ))
+
+                    fig_secretary_trend.update_layout(
+                        title='👥 Xu hướng thư ký theo tuần',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Tổng số thư ký', side='left', color='#3498db'),
+                        yaxis2=dict(title='Tuyển dụng/Nghỉ việc', side='right', overlaying='y', color='#2ecc71'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_secretary_trend, use_container_width=True)
+
+        with col_detail2:
+            # Phân tích hoạt động đào tạo
+            training_data = df_secretary[df_secretary['Nội dung'].isin(['Số buổi tập huấn, đào tạo cho thư ký', 'Số buổi sinh hoạt cho thư ký', 'Số buổi tham quan, học tập'])]
+
+            if not training_data.empty and 'Tuần' in training_data.columns:
+                training_pivot = training_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                training_pivot = training_pivot.reset_index()
+                training_pivot['Tuần'] = pd.to_numeric(training_pivot['Tuần'], errors='coerce')
+                training_pivot = training_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in training_pivot.columns:
+                    if col != 'Tuần':
+                        training_pivot[col] = pd.to_numeric(training_pivot[col], errors='coerce').fillna(0)
+
+                # Tạo biểu đồ stacked bar
+                fig_training = go.Figure()
+
+                colors = ['#f39c12', '#9b59b6', '#1abc9c']
+                color_idx = 0
+
+                for col in training_pivot.columns:
+                    if col != 'Tuần':
+                        display_name = col.replace('Số buổi ', '').replace(' cho thư ký', '')
+                        fig_training.add_trace(go.Bar(
+                            x=training_pivot['Tuần'],
+                            y=training_pivot[col],
+                            name=display_name,
+                            marker_color=colors[color_idx % len(colors)]
+                        ))
+                        color_idx += 1
+
+                fig_training.update_layout(
+                    title='📚 Hoạt động đào tạo theo tuần',
+                    height=350,
+                    xaxis=dict(title='Tuần', title_standoff=35),
+                    yaxis_title='Số buổi',
+                    barmode='stack',
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=-0.35,
+                        xanchor="center",
+                        x=0.5
+                    ),
+                    margin=dict(b=100)
+                )
+
+                st.plotly_chart(fig_training, use_container_width=True)
+
+        # Bảng dữ liệu chi tiết
+        st.markdown('<div class="section-header">📊 Dữ liệu chi tiết</div>', unsafe_allow_html=True)
+
+        # Hiển thị bảng với formatting
+        display_df = df_secretary.copy()
+        # Clean and format the data display
+        def clean_and_format_secretary_number(x):
+            # Clean non-breaking spaces and other whitespace
+            cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+            numeric_val = pd.to_numeric(cleaned, errors='coerce')
+            if pd.isna(numeric_val):
+                return str(x)  # Return original if conversion fails
+            elif numeric_val >= 1:
+                return f"{numeric_val:,.0f}"
+            else:
+                return f"{numeric_val:.1f}"
+
+        display_df['Số liệu'] = display_df['Số liệu'].apply(clean_and_format_secretary_number)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    else:
+        st.error("❌ Không có dữ liệu Hệ thống thư ký")
+        st.info("📁 Upload dữ liệu hoặc kiểm tra kết nối GitHub để xem thống kê chi tiết")
+
+# Tab 7: Bãi giữ xe
+with tab7:
+    st.markdown('<div class="tab-header">🅿️ Báo cáo Bãi giữ xe</div>', unsafe_allow_html=True)
+
+    def create_parking_data():
+        """Tạo dữ liệu mẫu cho bãi giữ xe"""
+        return pd.DataFrame({
+            'Tuần': [39] * 6,
+            'Tháng': [9] * 6,
+            'Nội dung': [
+                'Tổng số lượt vé ngày',
+                'Tổng số lượt vé tháng',
+                'Công suất trung bình/ngày',
+                'Doanh thu',
+                'Số phản ánh khiếu nại',
+                'Tỷ lệ sử dụng'
+            ],
+            'Số liệu': [1850, 145, 265, 18500000, 8, 78.5]
+        })
+
+    # Load data từ DataManager hoặc dữ liệu mẫu
+    df_parking = data_manager.get_category_data('Bãi giữ xe')
+
+    if df_parking is not None:
+        st.info(f"✅ Đã tải {len(df_parking)} bản ghi cho Bãi giữ xe từ file: {data_manager.metadata['filename']}")
+    else:
+        st.info("📁 Chưa có dữ liệu được tải từ sidebar. Hiển thị dữ liệu mẫu.")
+        df_parking = create_parking_data()
+
+    # Metrics
+    col1, col2, col3, col4 = st.columns(4)
+
+    if not df_parking.empty:
+        # Metrics overview tổng quan
+        st.markdown('<div class="section-header">📊 Tổng quan hoạt động Bãi giữ xe</div>', unsafe_allow_html=True)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Debug: Hiển thị cấu trúc dữ liệu
+        with st.expander("🔍 Debug: Cấu trúc dữ liệu Bãi giữ xe", expanded=False):
+            st.write("**Columns:**", list(df_parking.columns))
+            st.write("**Shape:**", df_parking.shape)
+            if 'Nội dung' in df_parking.columns:
+                st.write("**Nội dung values:**", df_parking['Nội dung'].unique().tolist())
+            st.dataframe(df_parking.head())
+
+        # Tính toán metrics từ dữ liệu - CỘNG TỔNG TẤT CẢ CÁC TUẦN
+        def get_parking_metric_value(content_name):
+            if 'Nội dung' not in df_parking.columns or 'Số liệu' not in df_parking.columns:
+                return 0
+
+            # Lấy tất cả các hàng có nội dung này và cộng tổng
+            result = df_parking[df_parking['Nội dung'] == content_name]['Số liệu']
+            if len(result) > 0:
+                # Clean data: remove non-breaking spaces and other whitespace characters
+                cleaned_result = result.astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+                # Convert tất cả values thành numeric và cộng tổng
+                numeric_values = pd.to_numeric(cleaned_result, errors='coerce').fillna(0)
+                total = numeric_values.sum()
+                return total
+            return 0
+
+        ve_ngay = get_parking_metric_value('Tổng số lượt vé ngày')
+        ve_thang = get_parking_metric_value('Tổng số lượt vé tháng')
+        doanh_thu = get_parking_metric_value('Doanh thu')
+        khieu_nai = get_parking_metric_value('Số phản ánh khiếu nại')
+
+        with col1:
+            st.metric("🎫 Vé ngày", f"{int(ve_ngay):,}", help="Tổng số lượt vé ngày tất cả các tuần")
+        with col2:
+            st.metric("📅 Vé tháng", f"{int(ve_thang):,}", help="Tổng số lượt vé tháng tất cả các tuần")
+        with col3:
+            st.metric("💰 Doanh thu", f"{int(doanh_thu):,} VND", help="Tổng doanh thu tất cả các tuần")
+        with col4:
+            st.metric("📢 Khiếu nại", f"{int(khieu_nai):,}", help="Tổng số phản ánh khiếu nại tất cả các tuần")
+
+        # Thêm hàng metrics thứ 2
+        col5, col6, col7, col8 = st.columns(4)
+
+        cong_suat = get_parking_metric_value('Công suất trung bình/ngày')
+        ty_le_su_dung = get_parking_metric_value('Tỷ lệ sử dụng')
+        # Tính tổng vé (ngày + tháng)
+        tong_ve = ve_ngay + ve_thang
+        # Tính doanh thu trung bình mỗi vé
+        doanh_thu_per_ve = (doanh_thu / tong_ve) if tong_ve > 0 else 0
+
+        with col5:
+            st.metric("⚡ Công suất", f"{int(cong_suat):,} xe/ngày", help="Công suất trung bình mỗi ngày tất cả các tuần")
+        with col6:
+            st.metric("📊 Tỷ lệ SD", f"{ty_le_su_dung:.1f}%", help="Tỷ lệ sử dụng trung bình tất cả các tuần")
+        with col7:
+            st.metric("📝 Tổng vé", f"{int(tong_ve):,}", help="Tổng tất cả vé (ngày + tháng)")
+        with col8:
+            st.metric("💵 DT/vé", f"{int(doanh_thu_per_ve):,} VND", help="Doanh thu trung bình mỗi vé")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Pivot Table Section - giống như Tab 4
+        create_parking_pivot_table(df_parking)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Biểu đồ tổng quan
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích</div>', unsafe_allow_html=True)
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            # Biểu đồ phân bố vé ngày vs vé tháng
+            ticket_data = df_parking[df_parking['Nội dung'].isin(['Tổng số lượt vé ngày', 'Tổng số lượt vé tháng'])]
+
+            if not ticket_data.empty:
+                # Làm sạch tên hiển thị
+                ticket_data_clean = ticket_data.copy()
+                ticket_data_clean['Nội dung'] = ticket_data_clean['Nội dung'].str.replace('Tổng số lượt ', '')
+
+                fig_ticket = px.pie(ticket_data_clean, values='Số liệu', names='Nội dung',
+                                  title='🎫 Phân bố loại vé',
+                                  hole=0.4)
+                fig_ticket.update_layout(height=400)
+                st.plotly_chart(fig_ticket, use_container_width=True)
+
+        with col_chart2:
+            # Biểu đồ doanh thu và khiếu nại
+            summary_data = pd.DataFrame({
+                'Chỉ số': ['Doanh thu (triệu VND)', 'Khiếu nại'],
+                'Giá trị': [doanh_thu/1000000, khieu_nai]  # Doanh thu tính theo triệu
+            })
+
+            fig_summary = px.bar(summary_data, x='Chỉ số', y='Giá trị',
+                               title='💰 Doanh thu và Khiếu nại',
+                               color='Chỉ số',
+                               color_discrete_map={'Doanh thu (triệu VND)': '#2ecc71', 'Khiếu nại': '#e74c3c'})
+            fig_summary.update_layout(height=400, yaxis_title='Giá trị')
+            st.plotly_chart(fig_summary, use_container_width=True)
+
+        # Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Row 1: Biểu đồ tổng quan hoạt động
+        col_detail1, col_detail2 = st.columns(2)
+
+        with col_detail1:
+            # Xu hướng doanh thu và số vé theo tuần
+            parking_time_data = df_parking[df_parking['Nội dung'].isin(['Doanh thu', 'Tổng số lượt vé ngày', 'Tổng số lượt vé tháng'])]
+
+            if not parking_time_data.empty and 'Tuần' in parking_time_data.columns:
+                parking_pivot = parking_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                parking_pivot = parking_pivot.reset_index()
+                parking_pivot['Tuần'] = pd.to_numeric(parking_pivot['Tuần'], errors='coerce')
+                parking_pivot = parking_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in parking_pivot.columns:
+                    if col != 'Tuần':
+                        parking_pivot[col] = pd.to_numeric(parking_pivot[col], errors='coerce').fillna(0)
+
+                # Tính tổng vé
+                if 'Tổng số lượt vé ngày' in parking_pivot.columns and 'Tổng số lượt vé tháng' in parking_pivot.columns:
+                    parking_pivot['Tổng vé'] = parking_pivot['Tổng số lượt vé ngày'] + parking_pivot['Tổng số lượt vé tháng']
+
+                if 'Doanh thu' in parking_pivot.columns and 'Tổng vé' in parking_pivot.columns:
+                    fig_parking_trend = go.Figure()
+
+                    # Doanh thu (trục trái)
+                    fig_parking_trend.add_trace(go.Scatter(
+                        x=parking_pivot['Tuần'],
+                        y=parking_pivot['Doanh thu'],
+                        mode='lines',
+                        name='Doanh thu',
+                        line=dict(color='#2ecc71', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Tổng vé (trục phải)
+                    fig_parking_trend.add_trace(go.Scatter(
+                        x=parking_pivot['Tuần'],
+                        y=parking_pivot['Tổng vé'],
+                        mode='lines',
+                        name='Tổng vé',
+                        line=dict(color='#3498db', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_parking_trend.update_layout(
+                        title='💰 Xu hướng doanh thu và số vé theo tuần',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Doanh thu (VND)', side='left', color='#2ecc71'),
+                        yaxis2=dict(title='Số vé', side='right', overlaying='y', color='#3498db'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_parking_trend, use_container_width=True)
+
+        with col_detail2:
+            # Phân tích công suất và tỷ lệ sử dụng
+            capacity_data = df_parking[df_parking['Nội dung'].isin(['Công suất trung bình/ngày', 'Tỷ lệ sử dụng', 'Số phản ánh khiếu nại'])]
+
+            if not capacity_data.empty and 'Tuần' in capacity_data.columns:
+                capacity_pivot = capacity_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0).infer_objects(copy=False)
+                capacity_pivot = capacity_pivot.reset_index()
+                capacity_pivot['Tuần'] = pd.to_numeric(capacity_pivot['Tuần'], errors='coerce')
+                capacity_pivot = capacity_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in capacity_pivot.columns:
+                    if col != 'Tuần':
+                        capacity_pivot[col] = pd.to_numeric(capacity_pivot[col], errors='coerce').fillna(0)
+
+                if 'Công suất trung bình/ngày' in capacity_pivot.columns and 'Tỷ lệ sử dụng' in capacity_pivot.columns:
+                    fig_capacity = go.Figure()
+
+                    # Công suất (trục trái)
+                    fig_capacity.add_trace(go.Scatter(
+                        x=capacity_pivot['Tuần'],
+                        y=capacity_pivot['Công suất trung bình/ngày'],
+                        mode='lines',
+                        name='Công suất',
+                        line=dict(color='#9b59b6', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Tỷ lệ sử dụng (trục phải)
+                    fig_capacity.add_trace(go.Scatter(
+                        x=capacity_pivot['Tuần'],
+                        y=capacity_pivot['Tỷ lệ sử dụng'],
+                        mode='lines',
+                        name='Tỷ lệ sử dụng (%)',
+                        line=dict(color='#f39c12', width=3),
+                        yaxis='y2'
+                    ))
+
+                    # Khiếu nại (nếu có)
+                    if 'Số phản ánh khiếu nại' in capacity_pivot.columns:
+                        fig_capacity.add_trace(go.Bar(
+                            x=capacity_pivot['Tuần'],
+                            y=capacity_pivot['Số phản ánh khiếu nại'],
+                            name='Khiếu nại',
+                            marker_color='#e74c3c',
+                            opacity=0.7,
+                            yaxis='y'
+                        ))
+
+                    fig_capacity.update_layout(
+                        title='⚡ Phân tích công suất và chất lượng',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Công suất / Khiếu nại', side='left', color='#9b59b6'),
+                        yaxis2=dict(title='Tỷ lệ sử dụng (%)', side='right', overlaying='y', color='#f39c12'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_capacity, use_container_width=True)
+
+        # Bảng dữ liệu chi tiết
+        st.markdown('<div class="section-header">📊 Dữ liệu chi tiết</div>', unsafe_allow_html=True)
+
+        # Hiển thị bảng với formatting
+        display_df = df_parking.copy()
+        # Clean and format the data display
+        def clean_and_format_parking_number(x):
+            # Clean non-breaking spaces and other whitespace
+            cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+            numeric_val = pd.to_numeric(cleaned, errors='coerce')
+            if pd.isna(numeric_val):
+                return str(x)  # Return original if conversion fails
+            elif numeric_val >= 1:
+                return f"{numeric_val:,.0f}"
+            else:
+                return f"{numeric_val:.1f}"
+
+        display_df['Số liệu'] = display_df['Số liệu'].apply(clean_and_format_parking_number)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    else:
+        st.error("❌ Không có dữ liệu Bãi giữ xe")
+        st.info("📁 Upload dữ liệu hoặc kiểm tra kết nối GitHub để xem thống kê chi tiết")
+
+def create_event_pivot_table(df):
+    """Tạo pivot table cho dữ liệu sự kiện"""
+
+    # CSS cho table
+    st.markdown("""
+    <style>
+    .pivot-table-event {
+        font-size: 16px !important;
+        font-weight: 500;
+    }
+    .pivot-table-event td {
+        padding: 12px 8px !important;
+        text-align: center !important;
+    }
+    .pivot-table-event th {
+        padding: 15px 8px !important;
+        text-align: center !important;
+        background-color: #f0f2f6 !important;
+        font-weight: bold !important;
+        font-size: 17px !important;
+    }
+    .increase { color: #16a085; font-weight: 600; }
+    .decrease { color: #e74c3c; font-weight: 600; }
+    .neutral { color: #7f8c8d; font-weight: 600; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        period_type = st.selectbox(
+            "📅 Tổng hợp theo:",
+            options=['Tuần', 'Tháng', 'Năm'],
+            index=0,
+            key="event_period_type"
+        )
+
+    # Xử lý dữ liệu thời gian
+    has_time_data = False
+    df_period = df.copy()
+
+    if 'Tuần' in df.columns or 'Tháng' in df.columns:
+        has_time_data = True
+
+        if period_type == 'Tuần' and 'Tuần' in df.columns:
+            df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+        elif period_type == 'Tháng' and 'Tháng' in df.columns:
+            df_period['period'] = 'T' + df_period['Tháng'].astype(str)
+            df_period['period_sort'] = pd.to_numeric(df_period['Tháng'], errors='coerce')
+        elif period_type == 'Năm':
+            df_period['period'] = '2025'
+            df_period['period_sort'] = 2025
+        else:
+            if 'Tuần' in df.columns:
+                df_period['period'] = 'W' + df_period['Tuần'].astype(str)
+                df_period['period_sort'] = pd.to_numeric(df_period['Tuần'], errors='coerce')
+            else:
+                has_time_data = False
+
+    if has_time_data:
+        # Các metric cho sự kiện
+        event_metrics = ['tong_su_kien', 'chu_tri', 'phoi_hop', 'quan_trong', 'hoi_nghi', 'doi_ngoai']
+
+        # Tạo metric columns từ dữ liệu Nội dung/Số liệu
+        if 'Nội dung' in df_period.columns and 'Số liệu' in df_period.columns:
+            for metric in event_metrics:
+                df_period[metric] = 0
+
+            # Mapping các metric từ Nội dung
+            metric_mapping = {
+                'tong_su_kien': ['Tổng số sự kiện hành chính của Bệnh viện'],
+                'chu_tri': ['Phòng Hành chính chủ trì'],
+                'phoi_hop': ['Phòng Hành chính phối hợp'],
+                'quan_trong': ['Sự kiện quan trọng'],
+                'hoi_nghi': ['Hội nghị hội thảo'],
+                'doi_ngoai': ['Hoạt động đối ngoại']
+            }
+
+            for metric, content_names in metric_mapping.items():
+                for content_name in content_names:
+                    mask = df_period['Nội dung'] == content_name
+                    df_period.loc[mask, metric] = pd.to_numeric(df_period.loc[mask, 'Số liệu'], errors='coerce').fillna(0)
+
+        # Tạo pivot data
+        pivot_data = df_period.groupby(['period', 'period_sort'])[event_metrics].sum().reset_index()
+        pivot_data = pivot_data.sort_values('period_sort', ascending=False)
+
+        # Tính toán biến động
+        for col in event_metrics:
+            pivot_data[f'{col}_prev'] = pivot_data[col].shift(-1)
+            pivot_data[f'{col}_change'] = pivot_data[col] - pivot_data[f'{col}_prev']
+            pivot_data[f'{col}_change_pct'] = ((pivot_data[col] / pivot_data[f'{col}_prev'] - 1) * 100).round(1)
+            pivot_data[f'{col}_change_pct'] = pivot_data[f'{col}_change_pct'].fillna(0)
+
+        # Hàm format cell với biến động
+        def format_cell_with_change(row, col):
+            current_val = row[col]
+            change_val = row[f'{col}_change']
+            change_pct = row[f'{col}_change_pct']
+            prev_val = row[f'{col}_prev']
+
+            if pd.isna(prev_val) or prev_val == 0:
+                return f"{int(current_val):,}"
+
+            if change_val > 0:
+                color_class = "increase"
+                arrow = "↗"
+                sign = "+"
+            elif change_val < 0:
+                color_class = "decrease"
+                arrow = "↘"
+                sign = ""
+            else:
+                color_class = "neutral"
+                arrow = "→"
+                sign = ""
+
+            return f"""<div style="text-align: center; line-height: 1.2;">
+                <div style="font-size: 16px; font-weight: 600;">{int(current_val):,}</div>
+                <div class="{color_class}" style="font-size: 12px;">{arrow} {sign}{int(change_val):,} ({sign}{change_pct:.1f}%)</div>
+            </div>"""
+
+        # Tạo HTML table
+        display_data = pivot_data.copy()
+
+        # Tạo header
+        html_table = '''
+        <table class="pivot-table-event" style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 2px solid #34495e;">
+            <thead>
+                <tr style="background: linear-gradient(90deg, #34495e, #2c3e50); color: white;">
+                    <th style="border: 1px solid #ddd; position: sticky; left: 0; background: #2c3e50; z-index: 10;">Kỳ</th>
+                    <th style="border: 1px solid #ddd;">🎉 Tổng SK</th>
+                    <th style="border: 1px solid #ddd;">👑 Chủ trì</th>
+                    <th style="border: 1px solid #ddd;">🤝 Phối hợp</th>
+                    <th style="border: 1px solid #ddd;">⭐ Quan trọng</th>
+                    <th style="border: 1px solid #ddd;">🏛️ Hội nghị</th>
+                    <th style="border: 1px solid #ddd;">🌍 Đối ngoại</th>
+                </tr>
+            </thead>
+            <tbody>
+        '''
+
+        # Thêm các row dữ liệu
+        for i, row in display_data.iterrows():
+            period_display = row['period']
+
+            # Alternating row colors
+            row_color = "#f8f9fa" if i % 2 == 0 else "#ffffff"
+
+            html_table += f'''
+            <tr style="background-color: {row_color};">
+                <td style="border: 1px solid #ddd; font-weight: bold; background-color: #ecf0f1; position: sticky; left: 0; z-index: 5;">{period_display}</td>
+                <td style="border: 1px solid #ddd;">{format_cell_with_change(row, 'tong_su_kien')}</td>
+                <td style="border: 1px solid #ddd;">{format_cell_with_change(row, 'chu_tri')}</td>
+                <td style="border: 1px solid #ddd;">{format_cell_with_change(row, 'phoi_hop')}</td>
+                <td style="border: 1px solid #ddd;">{format_cell_with_change(row, 'quan_trong')}</td>
+                <td style="border: 1px solid #ddd;">{format_cell_with_change(row, 'hoi_nghi')}</td>
+                <td style="border: 1px solid #ddd;">{format_cell_with_change(row, 'doi_ngoai')}</td>
+            </tr>
+            '''
+
+        html_table += '''
+            </tbody>
+        </table>
+        <div style="text-align: center; margin: 10px 0; color: #7f8c8d; font-size: 12px;">
+            📈 <span style="color: #16a085;">↗ Tăng</span> |
+            📉 <span style="color: #e74c3c;">↘ Giảm</span> |
+            ➡️ <span style="color: #7f8c8d;">→ Không đổi</span>
+        </div>
+        '''
+
+        return html_table
+    else:
+        return "<p style='text-align: center; color: #e74c3c;'>⚠️ Không có dữ liệu thời gian để tạo bảng pivot</p>"
+
+# Tab 8: Sự kiện
+with tab8:
+    st.markdown('<div class="tab-header">🎉 Báo cáo Sự kiện</div>', unsafe_allow_html=True)
+
+    def create_events_data():
+        """Tạo dữ liệu mẫu cho sự kiện"""
+        return pd.DataFrame({
+            'Tuần': [39] * 8,
+            'Tháng': [9] * 8,
+            'Nội dung': [
+                'Tổng số sự kiện hành chính của Bệnh viện',
+                'Phòng Hành chính chủ trì',
+                'Phòng Hành chính phối hợp',
+                'Tỷ lệ thành công',
+                'Sự kiện quan trọng',
+                'Hội nghị hội thảo',
+                'Hoạt động đối ngoại',
+                'Mức độ hài lòng'
+            ],
+            'Số liệu': [25, 15, 10, 96.0, 8, 12, 5, 92.5]
+        })
+
+    # Load data từ DataManager hoặc dữ liệu mẫu
+    df_events = data_manager.get_category_data('Sự kiện')
+
+    if df_events is not None:
+        st.info(f"✅ Đã tải {len(df_events)} bản ghi cho Sự kiện từ file: {data_manager.metadata['filename']}")
+    else:
+        st.info("📁 Chưa có dữ liệu được tải từ sidebar. Hiển thị dữ liệu mẫu.")
+        df_events = create_events_data()
+
+    # Metrics
+    col1, col2, col3, col4 = st.columns(4)
+
+    if not df_events.empty:
+        # Metrics overview tổng quan
+        st.markdown('<div class="section-header">📊 Tổng quan hoạt động Sự kiện</div>', unsafe_allow_html=True)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Debug: Hiển thị cấu trúc dữ liệu
+        with st.expander("🔍 Debug: Cấu trúc dữ liệu Sự kiện", expanded=False):
+            st.write("**Columns:**", list(df_events.columns))
+            st.write("**Shape:**", df_events.shape)
+            if 'Nội dung' in df_events.columns:
+                st.write("**Nội dung values:**", df_events['Nội dung'].unique().tolist())
+            st.dataframe(df_events.head())
+
+        # Tính toán metrics từ dữ liệu - CỘNG TỔNG TẤT CẢ CÁC TUẦN
+        def get_event_metric_value(content_name):
+            if 'Nội dung' not in df_events.columns or 'Số liệu' not in df_events.columns:
+                return 0
+
+            # Lấy tất cả các hàng có nội dung này và cộng tổng
+            result = df_events[df_events['Nội dung'] == content_name]['Số liệu']
+            if len(result) > 0:
+                # Clean data: remove non-breaking spaces and other whitespace characters
+                cleaned_result = result.astype(str).str.replace('\xa0', '').str.replace(' ', '').str.strip()
+                # Convert tất cả values thành numeric và cộng tổng
+                numeric_values = pd.to_numeric(cleaned_result, errors='coerce').fillna(0)
+                total = numeric_values.sum()
+                return total
+            return 0
+
+        tong_sk = get_event_metric_value('Tổng số sự kiện hành chính của Bệnh viện')
+        chu_tri = get_event_metric_value('Phòng Hành chính chủ trì')
+        phoi_hop = get_event_metric_value('Phòng Hành chính phối hợp')
+        thanh_cong = get_event_metric_value('Tỷ lệ thành công')
+
+        with col1:
+            st.metric("🎉 Tổng sự kiện", f"{int(tong_sk):,}", help="Tổng số sự kiện hành chính tất cả các tuần")
+        with col2:
+            st.metric("👑 Chủ trì", f"{int(chu_tri):,}", help="Tổng số sự kiện chủ trì tất cả các tuần")
+        with col3:
+            st.metric("🤝 Phối hợp", f"{int(phoi_hop):,}", help="Tổng số sự kiện phối hợp tất cả các tuần")
+        with col4:
+            st.metric("✅ Thành công", f"{thanh_cong:.1f}%", help="Tỷ lệ thành công trung bình tất cả các tuần")
+
+        # Thêm hàng metrics thứ 2
+        col5, col6, col7, col8 = st.columns(4)
+
+        quan_trong = get_event_metric_value('Sự kiện quan trọng')
+        hoi_nghi = get_event_metric_value('Hội nghị hội thảo')
+        doi_ngoai = get_event_metric_value('Hoạt động đối ngoại')
+        hai_long = get_event_metric_value('Mức độ hài lòng')
+
+        with col5:
+            st.metric("⭐ Quan trọng", f"{int(quan_trong):,}", help="Tổng số sự kiện quan trọng tất cả các tuần")
+        with col6:
+            st.metric("🏛️ Hội nghị", f"{int(hoi_nghi):,}", help="Tổng số hội nghị hội thảo tất cả các tuần")
+        with col7:
+            st.metric("🌍 Đối ngoại", f"{int(doi_ngoai):,}", help="Tổng số hoạt động đối ngoại tất cả các tuần")
+        with col8:
+            st.metric("😊 Hài lòng", f"{hai_long:.1f}%", help="Mức độ hài lòng trung bình tất cả các tuần")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Pivot Table Section - giống như Tab 4
+        create_event_pivot_table(df_events)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Biểu đồ tổng quan
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích</div>', unsafe_allow_html=True)
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            # Biểu đồ phân bố loại sự kiện
+            event_distribution_data = pd.DataFrame({
+                'Loại sự kiện': ['Chủ trì', 'Phối hợp', 'Quan trọng', 'Hội nghị', 'Đối ngoại'],
+                'Số lượng': [int(chu_tri), int(phoi_hop), int(quan_trong), int(hoi_nghi), int(doi_ngoai)]
+            })
+
+            fig_event = px.pie(event_distribution_data, values='Số lượng', names='Loại sự kiện',
+                              title='🎯 Phân bố loại sự kiện',
+                              hole=0.4)
+            fig_event.update_layout(height=400)
+            st.plotly_chart(fig_event, use_container_width=True)
+
+        with col_chart2:
+            # Biểu đồ hiệu quả và hài lòng
+            efficiency_data = pd.DataFrame({
+                'Chỉ số': ['Tỷ lệ thành công (%)', 'Mức độ hài lòng (%)'],
+                'Giá trị': [float(thanh_cong), float(hai_long)]
+            })
+
+            fig_efficiency = px.bar(efficiency_data, x='Chỉ số', y='Giá trị',
+                                   title='📊 Hiệu quả tổ chức sự kiện',
+                                   color='Chỉ số',
+                                   color_discrete_map={'Tỷ lệ thành công (%)': '#2ecc71', 'Mức độ hài lòng (%)': '#3498db'})
+            fig_efficiency.update_layout(height=400, yaxis_title='Tỷ lệ (%)')
+            st.plotly_chart(fig_efficiency, use_container_width=True)
+
+        # Biểu đồ phân tích chi tiết
+        st.markdown('<div class="section-header">📈 Biểu đồ phân tích chi tiết</div>', unsafe_allow_html=True)
+
+        # Row 1: Biểu đồ tổng quan hoạt động
+        col_detail1, col_detail2 = st.columns(2)
+
+        with col_detail1:
+            # Xu hướng tổng sự kiện và chủ trì theo tuần
+            events_time_data = df_events[df_events['Nội dung'].isin(['Tổng số sự kiện hành chính của Bệnh viện', 'Phòng Hành chính chủ trì', 'Phòng Hành chính phối hợp'])]
+
+            if not events_time_data.empty and 'Tuần' in events_time_data.columns:
+                events_pivot = events_time_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                events_pivot = events_pivot.reset_index()
+                events_pivot['Tuần'] = pd.to_numeric(events_pivot['Tuần'], errors='coerce')
+                events_pivot = events_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in events_pivot.columns:
+                    if col != 'Tuần':
+                        events_pivot[col] = pd.to_numeric(events_pivot[col], errors='coerce').fillna(0)
+
+                # Tính tổng sự kiện do phòng hành chính thực hiện
+                if 'Phòng Hành chính chủ trì' in events_pivot.columns and 'Phòng Hành chính phối hợp' in events_pivot.columns:
+                    events_pivot['HC thực hiện'] = events_pivot['Phòng Hành chính chủ trì'] + events_pivot['Phòng Hành chính phối hợp']
+
+                if 'Tổng số sự kiện hành chính của Bệnh viện' in events_pivot.columns and 'HC thực hiện' in events_pivot.columns:
+                    fig_events_trend = go.Figure()
+
+                    # Tổng sự kiện (trục trái)
+                    fig_events_trend.add_trace(go.Scatter(
+                        x=events_pivot['Tuần'],
+                        y=events_pivot['Tổng số sự kiện hành chính của Bệnh viện'],
+                        mode='lines',
+                        name='Tổng sự kiện',
+                        line=dict(color='#3498db', width=3),
+                        yaxis='y'
+                    ))
+
+                    # HC thực hiện (trục phải)
+                    fig_events_trend.add_trace(go.Scatter(
+                        x=events_pivot['Tuần'],
+                        y=events_pivot['HC thực hiện'],
+                        mode='lines',
+                        name='HC thực hiện',
+                        line=dict(color='#e74c3c', width=3),
+                        yaxis='y2'
+                    ))
+
+                    fig_events_trend.update_layout(
+                        title='🎉 Xu hướng sự kiện theo tuần',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Tổng sự kiện', side='left', color='#3498db'),
+                        yaxis2=dict(title='HC thực hiện', side='right', overlaying='y', color='#e74c3c'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_events_trend, use_container_width=True)
+
+        with col_detail2:
+            # Phân tích hiệu quả và chất lượng
+            quality_data = df_events[df_events['Nội dung'].isin(['Tỷ lệ thành công', 'Mức độ hài lòng', 'Sự kiện quan trọng'])]
+
+            if not quality_data.empty and 'Tuần' in quality_data.columns:
+                quality_pivot = quality_data.pivot(index='Tuần', columns='Nội dung', values='Số liệu').fillna(0)
+                quality_pivot = quality_pivot.reset_index()
+                quality_pivot['Tuần'] = pd.to_numeric(quality_pivot['Tuần'], errors='coerce')
+                quality_pivot = quality_pivot.sort_values('Tuần')
+
+                # Clean data
+                for col in quality_pivot.columns:
+                    if col != 'Tuần':
+                        quality_pivot[col] = pd.to_numeric(quality_pivot[col], errors='coerce').fillna(0)
+
+                if 'Tỷ lệ thành công' in quality_pivot.columns and 'Mức độ hài lòng' in quality_pivot.columns:
+                    fig_quality = go.Figure()
+
+                    # Tỷ lệ thành công (trục trái)
+                    fig_quality.add_trace(go.Scatter(
+                        x=quality_pivot['Tuần'],
+                        y=quality_pivot['Tỷ lệ thành công'],
+                        mode='lines',
+                        name='Thành công (%)',
+                        line=dict(color='#27ae60', width=3),
+                        yaxis='y'
+                    ))
+
+                    # Mức độ hài lòng (trục phải)
+                    fig_quality.add_trace(go.Scatter(
+                        x=quality_pivot['Tuần'],
+                        y=quality_pivot['Mức độ hài lòng'],
+                        mode='lines',
+                        name='Hài lòng (%)',
+                        line=dict(color='#f39c12', width=3),
+                        yaxis='y2'
+                    ))
+
+                    # Sự kiện quan trọng (nếu có)
+                    if 'Sự kiện quan trọng' in quality_pivot.columns:
+                        fig_quality.add_trace(go.Bar(
+                            x=quality_pivot['Tuần'],
+                            y=quality_pivot['Sự kiện quan trọng'],
+                            name='SK quan trọng',
+                            marker_color='#9b59b6',
+                            opacity=0.7,
+                            yaxis='y'
+                        ))
+
+                    fig_quality.update_layout(
+                        title='📊 Phân tích chất lượng và hiệu quả',
+                        height=350,
+                        xaxis=dict(title='Tuần', title_standoff=35),
+                        yaxis=dict(title='Thành công (%) / SK quan trọng', side='left', color='#27ae60'),
+                        yaxis2=dict(title='Hài lòng (%)', side='right', overlaying='y', color='#f39c12'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.35,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        margin=dict(b=100)
+                    )
+
+                    st.plotly_chart(fig_quality, use_container_width=True)
+
+        # Bảng dữ liệu chi tiết
+        st.markdown('<div class="section-header">📊 Dữ liệu chi tiết</div>', unsafe_allow_html=True)
+
+        # Hiển thị bảng với formatting
+        display_df = df_events.copy()
+        # Clean and format the data display
+        def clean_and_format_event_number(x):
+            # Clean non-breaking spaces and other whitespace
+            cleaned = str(x).replace('\xa0', '').replace(' ', '').strip()
+            numeric_val = pd.to_numeric(cleaned, errors='coerce')
+            if pd.isna(numeric_val):
+                return str(x)  # Return original if conversion fails
+            elif numeric_val >= 1:
+                return f"{numeric_val:,.0f}"
+            else:
+                return f"{numeric_val:.1f}"
+
+        display_df['Số liệu'] = display_df['Số liệu'].apply(clean_and_format_event_number)
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+    else:
+        st.error("❌ Không có dữ liệu Sự kiện")
+        st.info("📁 Upload dữ liệu hoặc kiểm tra kết nối GitHub để xem thống kê chi tiết")
+
+# Tab 12: Khác (cho các danh mục không phân loại)
+with tab12:
+    st.markdown('<div class="tab-header">🔗 Dữ liệu khác</div>', unsafe_allow_html=True)
+
+    st.info("📁 Tab này sẽ hiển thị các dữ liệu không thuộc các danh mục đã định nghĩa ở trên")
+
+    def create_other_data():
+        """Tạo dữ liệu mẫu cho các danh mục khác"""
+        return pd.DataFrame({
+            'Tuần': [39] * 8,
+            'Tháng': [9] * 8,
+            'Danh mục': ['Lễ tân', 'Tiếp khách trong nước', 'Đón tiếp khách VIP',
+                        'Tổ chức cuộc họp trực tuyến', 'Trang điều hành tác nghiệp',
+                        'Lễ tân', 'Tiếp khách trong nước', 'Tiếp khách trong nước'],
+            'Nội dung': [
+                'Hỗ trợ lễ tân cho hội nghị/hội thảo',
+                'Tổng số đoàn khách trong nước, trong đó:',
+                'Số lượt khách VIP được lễ tân tiếp đón, hỗ trợ khám chữa bệnh',
+                'Tổng số cuộc họp trực tuyến do Phòng Hành chính chuẩn bị',
+                'Số lượng tin đăng ĐHTN',
+                'Tham quan, học tập',
+                'Làm việc',
+                'Tỷ lệ hài lòng'
+            ],
+            'Số liệu': [12, 35, 125, 18, 45, 28, 7, 89.5]
+        })
+
+    # Load data từ DataManager hoặc dữ liệu mẫu
+    main_categories = ['Tổ xe', 'Tổng đài', 'Hệ thống thư ký Bệnh viện', 'Bãi giữ xe', 'Sự kiện']
+    df_other = data_manager.get_other_categories_data(main_categories)
+
+    if df_other is not None:
+        st.info(f"✅ Đã tải {len(df_other)} bản ghi cho danh mục khác từ file: {data_manager.metadata['filename']}")
+    else:
+        st.info("📁 Chưa có dữ liệu được tải từ sidebar. Hiển thị dữ liệu mẫu.")
+        df_other = create_other_data()
+
+    # Display by category if Danh mục column exists
+    if 'Danh mục' in df_other.columns:
+        categories = df_other['Danh mục'].unique()
+        for category in categories:
+            with st.expander(f"📁 {category}", expanded=True):
+                category_data = df_other[df_other['Danh mục'] == category]
+                st.dataframe(category_data, use_container_width=True)
+    else:
+        st.subheader("📊 Chi tiết dữ liệu")
+        st.dataframe(df_other, use_container_width=True)
 
 # Footer
 st.markdown("---")
