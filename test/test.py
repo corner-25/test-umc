@@ -94,13 +94,13 @@ class GitHubDataManager:
         except Exception as e:
             return False, f"❌ Lỗi kết nối: {str(e)}"
 
-    def load_current_data(self):
+    def load_current_data(_self):
         """Tải dữ liệu hiện tại từ GitHub"""
         try:
-            headers = {"Authorization": f"token {self.github_token}"}
+            headers = {"Authorization": f"token {_self.github_token}"}
 
             # Tải file current_dashboard_data.json
-            file_url = f"https://api.github.com/repos/{self.github_owner}/{self.github_repo}/contents/current_dashboard_data.json"
+            file_url = f"https://api.github.com/repos/{_self.github_owner}/{_self.github_repo}/contents/current_dashboard_data.json"
             response = requests.get(file_url, headers=headers)
 
             if response.status_code == 200:
@@ -414,9 +414,72 @@ if enable_global_filter:
 
 st.sidebar.markdown("---")
 
-# Hàm tiện ích để load dữ liệu từ GitHub
-def load_data_from_github(filename):
-    """Load dữ liệu từ GitHub private repo"""
+# === CACHE MANAGEMENT ===
+st.sidebar.subheader("⚡ Quản lý Cache")
+col_cache1, col_cache2 = st.sidebar.columns(2)
+with col_cache1:
+    if st.button("🗑️ Xóa Cache", use_container_width=True):
+        st.cache_data.clear()
+        st.success("✅ Đã xóa cache!")
+        st.rerun()
+
+with col_cache2:
+    if st.button("🔄 Refresh", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+st.sidebar.caption("💾 Cache lưu trên GitHub repo")
+
+st.sidebar.markdown("---")
+
+# Hàm lưu cache lên GitHub
+def save_cache_to_github(filename, data_df):
+    """Lưu cache DataFrame lên GitHub repo"""
+    try:
+        github_token = st.secrets.get("github_token", "")
+        github_owner = st.secrets.get("github_owner", "")
+        github_repo = st.secrets.get("github_repo", "")
+
+        cache_filename = f"cache_{filename}"
+        cache_data = {
+            "data": data_df.to_dict('records'),
+            "cached_at": datetime.now().isoformat(),
+            "original_file": filename
+        }
+
+        url = f"https://api.github.com/repos/{github_owner}/{github_repo}/contents/{cache_filename}"
+        headers = {"Authorization": f"token {github_token}"}
+
+        # Check if cache file exists
+        response = requests.get(url, headers=headers, verify=False)
+
+        content_encoded = base64.b64encode(json.dumps(cache_data).encode()).decode()
+
+        if response.status_code == 200:
+            # Update existing cache
+            sha = response.json()['sha']
+            payload = {
+                "message": f"🔄 Update cache for {filename}",
+                "content": content_encoded,
+                "sha": sha
+            }
+        else:
+            # Create new cache
+            payload = {
+                "message": f"💾 Create cache for {filename}",
+                "content": content_encoded
+            }
+
+        put_response = requests.put(url, headers=headers, json=payload, verify=False)
+        if put_response.status_code in [200, 201]:
+            return True
+    except Exception as e:
+        st.warning(f"⚠️ Không thể lưu cache: {str(e)}")
+    return False
+
+# Hàm tiện ích để load dữ liệu từ GitHub với cache trên GitHub
+def load_data_from_github(filename, use_cache=True):
+    """Load dữ liệu từ GitHub private repo với caching trên chính GitHub repo"""
     try:
         github_token = st.secrets.get("github_token", "")
         github_owner = st.secrets.get("github_owner", "")
@@ -426,9 +489,25 @@ def load_data_from_github(filename):
             st.error(f"❌ Chưa cấu hình GitHub để load {filename}")
             return None
 
-        url = f"https://api.github.com/repos/{github_owner}/{github_repo}/contents/{filename}"
         headers = {"Authorization": f"token {github_token}"}
 
+        # Try load from cache first
+        if use_cache:
+            cache_filename = f"cache_{filename}"
+            cache_url = f"https://api.github.com/repos/{github_owner}/{github_repo}/contents/{cache_filename}"
+            cache_response = requests.get(cache_url, headers=headers, verify=False)
+
+            if cache_response.status_code == 200:
+                cache_content = cache_response.json()
+                cache_file_content = base64.b64decode(cache_content["content"]).decode('utf-8')
+                cache_data = json.loads(cache_file_content)
+
+                df = pd.DataFrame(cache_data["data"])
+                st.info(f"💾 Loaded từ cache (cached at: {cache_data.get('cached_at', 'N/A')})")
+                return df
+
+        # Load from original file if no cache or use_cache=False
+        url = f"https://api.github.com/repos/{github_owner}/{github_repo}/contents/{filename}"
         response = requests.get(url, headers=headers, verify=False)
 
         if response.status_code == 200:
@@ -441,6 +520,10 @@ def load_data_from_github(filename):
                 df = pd.DataFrame(data["data"])
             else:
                 df = pd.DataFrame(data)
+
+            # Save to cache on GitHub
+            if use_cache:
+                save_cache_to_github(filename, df)
 
             return df
         else:
@@ -917,11 +1000,11 @@ def create_outgoing_pivot_table(df):
         elif col == 'decisions_total':
             column_names[new_col] = 'Quyết định'
         elif col == 'regulations_total':
-            column_names[new_col] = 'Quy chế'
-        elif col == 'rules_total':
             column_names[new_col] = 'Quy định'
+        elif col == 'rules_total':
+            column_names[new_col] = 'Quy chế'
         elif col == 'procedures_total':
-            column_names[new_col] = 'Thủ tục'
+            column_names[new_col] = 'Quy trình'
         elif col == 'instruct_total':
             column_names[new_col] = 'Hướng dẫn'
 
@@ -995,7 +1078,7 @@ def create_outgoing_docs_charts(df, period_type='Tuần'):
             x_title = "Ngày"
 
         business_categories = ['instruct_total', 'procedures_total']
-        business_names = ['Hướng dẫn', 'Thủ tục']
+        business_names = ['Hướng dẫn', 'Quy trình']
         business_colors = ['#1f77b4', '#ff7f0e']
 
         # Chỉ lấy các cột có trong DataFrame
@@ -1038,7 +1121,7 @@ def create_outgoing_docs_charts(df, period_type='Tuần'):
                         ))
 
         fig_business.update_layout(
-            title=f'📄 Hướng dẫn & Thủ tục theo {period_type.lower()}',
+            title=f'📄 Hướng dẫn & Quy trình theo {period_type.lower()}',
             xaxis_title=x_title,
             yaxis_title="Số lượng",
             hovermode='x unified'
@@ -1046,9 +1129,9 @@ def create_outgoing_docs_charts(df, period_type='Tuần'):
         st.plotly_chart(fig_business, use_container_width=True)
     
     with col2:
-        # Chart 2: Quy chế + Quy định (bỏ hướng dẫn và thủ tục)
+        # Chart 2: Quy định + Quy chế (bỏ hướng dẫn và thủ tục)
         admin_categories = ['regulations_total', 'rules_total']
-        admin_names = ['Quy chế', 'Quy định']
+        admin_names = ['Quy định', 'Quy chế']
         admin_colors = ['#2ca02c', '#d62728']
 
         # Chỉ lấy các cột có trong DataFrame
@@ -1091,7 +1174,7 @@ def create_outgoing_docs_charts(df, period_type='Tuần'):
                         ))
 
         fig_admin.update_layout(
-            title=f'📋 Quy chế & Quy định theo {period_type.lower()}',
+            title=f'📋 Quy định & Quy chế theo {period_type.lower()}',
             xaxis_title=x_title,
             yaxis_title="Số lượng",
             hovermode='x unified'
@@ -1176,7 +1259,7 @@ def create_outgoing_docs_charts(df, period_type='Tuần'):
         # Biểu đồ phân bố theo loại văn bản theo period
         categories = ['contracts_total', 'decisions_total', 'regulations_total',
                      'rules_total', 'procedures_total', 'instruct_total']
-        category_names = ['Hợp đồng', 'Quyết định', 'Quy chế', 'Quy định', 'Thủ tục', 'Hướng dẫn']
+        category_names = ['Hợp đồng', 'Quyết định', 'Quy định', 'Quy chế', 'Quy trình', 'Hướng dẫn']
 
         # Chỉ lấy các cột có trong DataFrame
         available_categories = [col for col in categories if col in df_chart.columns]
@@ -3150,8 +3233,8 @@ with tab3:
                 else:
                     st.metric("📈 TB/ngày", "0")
 
-            # Hàng 2: Thống kê quy chế và quy định
-            st.markdown("#### 📋 Thống kê quy chế và quy định")
+            # Hàng 2: Thống kê quy định và quy chế
+            st.markdown("#### 📋 Thống kê quy định và quy chế")
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
@@ -3161,7 +3244,7 @@ with tab3:
                 st.metric("📋 Quy chế", f"{int(total_rules):,}")
 
             with col3:
-                st.metric("🔄 Thủ tục", f"{int(total_procedures):,}")
+                st.metric("🔄 Quy trình", f"{int(total_procedures):,}")
 
             with col4:
                 st.metric("📚 Hướng dẫn", f"{int(total_instruct):,}")
